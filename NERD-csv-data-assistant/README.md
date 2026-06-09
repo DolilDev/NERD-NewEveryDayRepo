@@ -7,9 +7,11 @@ interfaces: a command-line tool and a Flask web app.
 
 ## Features
 
-- **Loading** — reads CSV files with automatic delimiter detection (comma `,`,
-  semicolon `;`, and tab), validates the file (exists, non-empty, sane headers)
-  and reports problems with readable messages instead of raw tracebacks.
+- **Loading** — reads CSV files with automatic **delimiter** detection (comma
+  `,`, semicolon `;`, and tab) and automatic **encoding** detection (UTF-8 with
+  a Latin-1 fallback). Validates the file (exists, non-empty, sane headers, and
+  every row has the same column count) and reports problems with readable
+  messages instead of raw tracebacks.
 - **Processing**
   - `filter` rows by a condition: `==`, `!=`, `>`, `<` (plus `>=`, `<=`),
   - `sort` rows by any column, ascending or descending,
@@ -48,9 +50,45 @@ interfaces: a command-line tool and a Flask web app.
 └── requirements.txt
 ```
 
-The design follows the three core modules required by the task — **loading**,
-**processing** and a **user interface** (CLI) — extended with an **export**
-module and a **Flask web** front-end.
+## Architecture
+
+The code is split into single-responsibility modules. Data always flows in one
+direction: **load → process → (display | export)**. Both front-ends — the CLI
+and the Flask web app — reuse the exact same `src/` modules, so the two
+interfaces behave identically.
+
+```
+            ┌──────────────┐        ┌──────────────┐
+  CSV file  │  loader.py   │ frame  │ processor.py │ result
+ ──────────▶│ read+detect  │───────▶│ filter/sort/ │───────┐
+            │ +validate    │        │ aggregate    │       │
+            └──────────────┘        └──────────────┘       ▼
+                   ▲                                 ┌──────────────┐
+                   │                                 │ exporter.py  │
+            ┌──────┴───────┐  call modules           │ CSV / JSON   │
+            │ cli.py /     │◀───────────────────────▶└──────────────┘
+            │ web/app.py   │  (two front-ends)
+            └──────────────┘
+                   │ logs
+                   ▼
+          logging_config.py ──▶ console + app.log
+```
+
+| Module | Responsibility | Key API |
+| ------ | -------------- | ------- |
+| `src/loader.py` | Read a CSV into a `DataFrame`. Auto-detects the delimiter and encoding, validates the file, and raises `LoaderError` on any problem. | `load_csv()`, `detect_delimiter()`, `detect_encoding()` |
+| `src/processor.py` | Pure transformations on the `DataFrame` (no I/O). Raises `ProcessorError` for bad columns/operators/types. | `filter_rows()`, `sort_rows()`, `aggregate()` |
+| `src/exporter.py` | Serialize a `DataFrame` to CSV/JSON, as a string (web download) or to disk (CLI). Raises `ExporterError`. | `serialize()`, `export_data()` |
+| `src/cli.py` | `argparse` front-end. Parses arguments, calls loader → processor → exporter, prints results, turns errors into clean messages + exit codes. | `main()`, `build_parser()` |
+| `web/app.py` | Flask front-end. Handles upload → process → HTML table → CSV/JSON download, with flash messages and error handlers (404/413/500). | `create_app()` |
+| `src/logging_config.py` | Shared logging setup so every module logs user operations to both the console and `app.log`. | `configure_logging()` |
+
+**How they connect:** `loader` produces a `DataFrame`; `processor` consumes and
+returns a transformed `DataFrame`; `exporter` serializes it. `cli.py` and
+`web/app.py` are thin orchestration layers that wire these three together and
+present the result. `logging_config.py` is shared infrastructure used by all of
+them. Each layer raises its own exception type, and the front-ends catch those
+to show readable messages instead of tracebacks.
 
 ## Setup
 
