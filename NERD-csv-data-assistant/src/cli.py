@@ -124,6 +124,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         # Modules already logged the technical detail; show a clean message.
         print(f"Error: {exc}", file=sys.stderr)
         return 1
+    except Exception as exc:  # noqa: BLE001 - last-resort guard against raw tracebacks
+        logger.exception("Unexpected error while running command '%s'.", args.command)
+        print(f"Unexpected error: {exc}", file=sys.stderr)
+        return 1
 
     return 0
 

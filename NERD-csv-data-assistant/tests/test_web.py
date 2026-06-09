@@ -49,6 +49,26 @@ def test_process_filter_and_download(client):
     assert "Piotr" in csv_resp.get_data(as_text=True)
 
 
+def test_download_unknown_token_returns_404(client):
+    response = client.get("/download/deadbeef/csv")
+    assert response.status_code == 404
+
+
+def test_oversized_upload_is_rejected():
+    app = create_app()
+    app.config["TESTING"] = True
+    app.config["MAX_CONTENT_LENGTH"] = 16  # tiny cap to trigger 413
+    client = app.test_client()
+    big = b"name,age\n" + b"x,1\n" * 100
+    response = client.post(
+        "/process",
+        data={"file": (io.BytesIO(big), "data.csv"), "operation": "sort", "column": "age"},
+        content_type="multipart/form-data",
+        follow_redirects=True,
+    )
+    assert "too large" in response.get_data(as_text=True)
+
+
 def test_process_invalid_column_flashes_error(client):
     response = client.post(
         "/process",

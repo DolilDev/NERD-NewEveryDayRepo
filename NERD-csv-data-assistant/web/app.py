@@ -87,6 +87,10 @@ def create_app() -> Flask:
             logger.warning("Web request failed: %s", exc)
             flash(str(exc))
             return redirect(url_for("index"))
+        except Exception:  # noqa: BLE001 - never surface a raw traceback to the user
+            logger.exception("Unexpected error while processing upload.")
+            flash("An unexpected error occurred while processing the file.")
+            return redirect(url_for("index"))
 
         token = uuid4().hex
         _RESULTS[token] = result
@@ -116,6 +120,24 @@ def create_app() -> Flask:
             mimetype=_MIME_TYPES[fmt],
             headers={"Content-Disposition": f"attachment; filename=result.{fmt}"},
         )
+
+    @app.errorhandler(413)
+    def too_large(_error):
+        # 413 is not a redirect status, so render the message directly.
+        return render_template(
+            "error.html", message="Uploaded file is too large (limit: 10 MB)."
+        ), 413
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return render_template("error.html", message=error.description), 404
+
+    @app.errorhandler(500)
+    def server_error(_error):
+        logger.exception("Unhandled server error.")
+        return render_template(
+            "error.html", message="An unexpected server error occurred."
+        ), 500
 
     return app
 
