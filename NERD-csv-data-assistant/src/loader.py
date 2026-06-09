@@ -3,8 +3,10 @@
 Responsible for reading CSV files into a :class:`pandas.DataFrame` with:
 
 * automatic delimiter detection (supports at least comma ``,`` and semicolon
-  ``;`` separated files),
-* validation (file exists, is a regular file, is not empty, headers are sane),
+  ``;`` separated files, plus tab),
+* automatic encoding detection (UTF-8 with a Latin-1 fallback),
+* validation: file exists, is a regular file, is not empty, has sane headers,
+  and every data row has the same number of columns as the header,
 * readable error handling — every failure is raised as :class:`LoaderError`
   carrying a human-friendly message instead of a raw traceback.
 """
@@ -23,6 +25,10 @@ logger = logging.getLogger(__name__)
 # Delimiters the loader is able to auto-detect.
 SUPPORTED_DELIMITERS = [",", ";", "\t"]
 
+# Encodings tried in order. Latin-1 maps every byte, so it acts as a safety net
+# for files that are not valid UTF-8 (e.g. legacy Windows/Excel exports).
+SUPPORTED_ENCODINGS = ["utf-8", "latin-1"]
+
 PathLike = Union[str, Path]
 
 
@@ -33,14 +39,28 @@ class LoaderError(Exception):
     """
 
 
-def detect_delimiter(file_path: Path) -> str:
+def detect_encoding(file_path: Path) -> str:
+    """Return the first encoding from :data:`SUPPORTED_ENCODINGS` that decodes
+    the file. Reads the raw bytes once and tries each encoding."""
+    raw = file_path.read_bytes()
+    for encoding in SUPPORTED_ENCODINGS:
+        try:
+            raw.decode(encoding)
+            return encoding
+        except UnicodeDecodeError:
+            continue
+    # latin-1 decodes any byte sequence, so we normally never get here.
+    return SUPPORTED_ENCODINGS[-1]
+
+
+def detect_delimiter(file_path: Path, encoding: str = "utf-8") -> str:
     """Guess the delimiter used by ``file_path``.
 
     Uses :class:`csv.Sniffer` first and falls back to counting candidate
     delimiters on the header line. Defaults to a comma when the file looks like
     a single-column file.
     """
-    with file_path.open("r", encoding="utf-8", newline="") as handle:
+    with file_path.open("r", encoding=encoding, newline="") as handle:
         sample = handle.read(8192)
 
     if not sample.strip():
@@ -61,7 +81,11 @@ def detect_delimiter(file_path: Path) -> str:
     return best if counts[best] > 0 else ","
 
 
-def load_csv(file_path: PathLike, delimiter: Optional[str] = None) -> pd.DataFrame:
+def load_csv(
+    file_path: PathLike,
+    delimiter: Optional[str] = None,
+    encoding: Optional[str] = None,
+) -> pd.DataFrame:
     """Load a CSV file into a :class:`pandas.DataFrame`.
 
     Parameters
@@ -70,12 +94,15 @@ def load_csv(file_path: PathLike, delimiter: Optional[str] = None) -> pd.DataFra
         Path to the CSV file.
     delimiter:
         Force a specific delimiter. When ``None`` (default) it is auto-detected.
+    encoding:
+        Force a specific encoding. When ``None`` (default) it is auto-detected
+        (UTF-8 first, then Latin-1).
 
     Raises
     ------
     LoaderError
-        If the file is missing, not a file, empty, badly formatted or has
-        invalid headers.
+        If the file is missing, not a file, empty, badly formatted, has invalid
+        headers or rows with an inconsistent number of columns.
     """
     path = Path(file_path)
 
@@ -94,12 +121,20 @@ def load_csv(file_path: PathLike, delimiter: Optional[str] = None) -> pd.DataFra
         logger.error(message)
         raise LoaderError(message)
 
+    if encoding is None:
+        encoding = detect_encoding(path)
+        if encoding != "utf-8":
+            logger.warning("File '%s' is not UTF-8; using '%s'.", path, encoding)
+
     if delimiter is None:
-        delimiter = detect_delimiter(path)
+        delimiter = detect_delimiter(path, encoding)
         logger.info("Auto-detected delimiter %r for '%s'.", delimiter, path)
 
+    # Explicit, friendly check for ragged rows before handing off to pandas.
+    _validate_row_lengths(path, delimiter, encoding)
+
     try:
-        frame = pd.read_csv(path, sep=delimiter)
+        frame = pd.read_csv(path, sep=delimiter, encoding=encoding)
     except pd.errors.EmptyDataError as exc:
         message = f"File contains no parsable data: '{path}'."
         logger.error(message)
@@ -109,7 +144,7 @@ def load_csv(file_path: PathLike, delimiter: Optional[str] = None) -> pd.DataFra
         logger.error(message)
         raise LoaderError(message) from exc
     except UnicodeDecodeError as exc:
-        message = f"File '{path}' is not valid UTF-8 text."
+        message = f"File '{path}' could not be decoded as {encoding}."
         logger.error(message)
         raise LoaderError(message) from exc
 
@@ -119,12 +154,38 @@ def load_csv(file_path: PathLike, delimiter: Optional[str] = None) -> pd.DataFra
         logger.warning("File '%s' has headers but no data rows.", path)
 
     logger.info(
-        "Loaded %d rows and %d columns from '%s'.",
+        "Loaded %d rows and %d columns from '%s' (delimiter=%r, encoding=%s).",
         len(frame),
         frame.shape[1],
         path,
+        delimiter,
+        encoding,
     )
     return frame
+
+
+def _validate_row_lengths(path: Path, delimiter: str, encoding: str) -> None:
+    """Ensure every data row has the same field count as the header.
+
+    pandas silently pads short rows with ``NaN`` and only raises on *extra*
+    fields, so we validate explicitly to give a clear, located error message.
+    """
+    with path.open("r", encoding=encoding, newline="") as handle:
+        reader = csv.reader(handle, delimiter=delimiter)
+        header_len: Optional[int] = None
+        for line_no, row in enumerate(reader, start=1):
+            if not row:  # skip blank lines (pandas ignores them too)
+                continue
+            if header_len is None:
+                header_len = len(row)
+                continue
+            if len(row) != header_len:
+                message = (
+                    f"Inconsistent number of columns in '{path}': row {line_no} "
+                    f"has {len(row)} field(s) but the header has {header_len}."
+                )
+                logger.error(message)
+                raise LoaderError(message)
 
 
 def _validate_headers(frame: pd.DataFrame, path: Path) -> None:

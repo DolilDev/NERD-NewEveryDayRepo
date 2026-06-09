@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.loader import LoaderError, detect_delimiter, load_csv
+from src.loader import LoaderError, detect_delimiter, detect_encoding, load_csv
 
 
 def test_load_comma_csv(comma_csv):
@@ -39,3 +39,20 @@ def test_blank_headers_raise(tmp_path):
     bad.write_text(",age\n1,29\n", encoding="utf-8")
     with pytest.raises(LoaderError, match="missing or blank column headers"):
         load_csv(bad)
+
+
+def test_inconsistent_column_count_raises(tmp_path):
+    ragged = tmp_path / "ragged.csv"
+    ragged.write_text("name,age,city\nAnna,29,Warsaw\nPiotr,41\n", encoding="utf-8")
+    with pytest.raises(LoaderError, match="Inconsistent number of columns"):
+        load_csv(ragged)
+
+
+def test_latin1_encoding_is_detected(tmp_path):
+    latin = tmp_path / "latin.csv"
+    # "Müller" / "café" are not valid UTF-8 when written as Latin-1 bytes.
+    latin.write_bytes("name;city\nM\xfcller;caf\xe9\n".encode("latin-1"))
+    assert detect_encoding(latin) == "latin-1"
+    frame = load_csv(latin)
+    assert frame.shape == (1, 2)
+    assert frame.loc[0, "name"] == "Müller"
