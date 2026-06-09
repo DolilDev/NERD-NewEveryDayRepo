@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<form class="card" action="{{ url_for('process') }}" method="post" enctype="multipart/form-data">
+  <label for="file">CSV file</label>
+  <input type="file" id="file" name="file" accept=".csv" required>
+
+  <label for="operation">Operation</label>
+  <select id="operation" name="operation" onchange="toggleFields()">
+    <option value="filter">Filter rows</option>
+    <option value="sort">Sort rows</option>
+    <option value="aggregate">Aggregate column</option>
+  </select>
+
+  <label for="column">Column</label>
+  <input type="text" id="column" name="column" placeholder="e.g. salary" required>
+
+  <div class="row">
+    <div id="filter-operator">
+      <label for="operator">Operator</label>
+      <select id="operator" name="operator">
+        {% for op in operators %}<option value="{{ op }}">{{ op }}</option>{% endfor %}
+      </select>
+    </div>
+    <div id="filter-value">
+      <label for="value">Value</label>
+      <input type="text" id="value" name="value" placeholder="e.g. 9000">
+    </div>
+    <div id="sort-order" style="display:none">
+      <label for="order">Order</label>
+      <select id="order" name="order">
+        <option value="asc">Ascending</option>
+        <option value="desc">Descending</option>
+      </select>
+    </div>
+    <div id="agg-op" style="display:none">
+      <label for="aggregation">Aggregation</label>
+      <select id="aggregation" name="aggregation">
+        {% for agg in aggregations %}<option value="{{ agg }}">{{ agg }}</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <button type="submit">Run operation</button>
+  <p class="muted">Comma- and semicolon-separated files are auto-detected.</p>
+</form>
+
+<script>
+  function toggleFields() {
+    const op = document.getElementById('operation').value;
+    document.getElementById('filter-operator').style.display = op === 'filter' ? '' : 'none';
+    document.getElementById('filter-value').style.display = op === 'filter' ? '' : 'none';
+    document.getElementById('sort-order').style.display = op === 'sort' ? '' : 'none';
+    document.getElementById('agg-op').style.display = op === 'aggregate' ? '' : 'none';
+  }
+  toggleFields();
+</script>
+{% endblock %}
