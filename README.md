@@ -4,6 +4,7 @@ Kolekcja codziennych questów z aplikacji NERD — jeden quest dziennie, każdy 
 
 | Status | Quest | Opis | Folder |
 | :----: | ----- | ---- | ------ |
+| ⏳ | Symulator Ruchu Pojazdów | Ten projekt wprowadza użytkownika w tematykę symulacji i modelowania, co różni się od dotychczasowych działań w obszarze aplikacji webowych… | [NERD-traffic-simulator](./NERD-traffic-simulator) |
 | ✅ | Budowa inteligentnego asystenta do przetwarzania danych z plików CSV | Użytkownik ma doświadczenie w JavaScript, Pythonie oraz tworzeniu aplikacji webowych, ale nie eksplorował jeszcze zaawansowanego przetwarza… | [NERD-csv-data-assistant](./NERD-csv-data-assistant) |
 
 ---
