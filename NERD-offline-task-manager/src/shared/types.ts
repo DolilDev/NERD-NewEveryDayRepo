@@ -30,3 +30,22 @@ export interface UpdateTaskInput {
   description?: string;
   status?: TaskStatus;
 }
+
+/** Envelope returned by every IPC call so the renderer can handle errors safely. */
+export interface IpcSuccess<T> {
+  ok: true;
+  data: T;
+}
+export interface IpcFailure {
+  ok: false;
+  error: { name: string; message: string };
+}
+export type IpcResult<T> = IpcSuccess<T> | IpcFailure;
+
+/** The typed surface exposed to the renderer as `window.api`. */
+export interface TaskApi {
+  listTasks(): Promise<IpcResult<Task[]>>;
+  addTask(input: CreateTaskInput): Promise<IpcResult<Task>>;
+  editTask(id: string, input: UpdateTaskInput): Promise<IpcResult<Task>>;
+  deleteTask(id: string): Promise<IpcResult<void>>;
+}
