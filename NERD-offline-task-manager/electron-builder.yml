@@ -1,0 +1,11 @@
+appId: com.nerd.offline-task-manager
+productName: NERD Offline Task Manager
+directories:
+  output: release
+files:
+  - dist/**/*
+  - package.json
+linux:
+  target:
+    - AppImage
+  category: Utility

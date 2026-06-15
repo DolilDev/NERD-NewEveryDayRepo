@@ -12,7 +12,9 @@
     "test": "jest",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder"
   },
   "author": "DolilDev",
   "license": "MIT",
@@ -28,6 +30,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^25.9.3",
     "electron": "^42.4.0",
+    "electron-builder": "^26.15.3",
     "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.6.0",
