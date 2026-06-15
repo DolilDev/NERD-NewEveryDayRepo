@@ -15,7 +15,8 @@ tested in isolation.
 - JSON **export/import** that merges by task id (existing tasks updated, new ones inserted).
 - Optional **Firebase Firestore** cloud sync (push/pull), with graceful degradation:
   without credentials the cloud buttons are disabled and everything else still works.
-- Unit tests for the business-logic and synchronisation layers.
+- Filter the list by status, sort it (newest / oldest / title) and a live task counter.
+- Unit and end-to-end tests for the business-logic, synchronisation and UI layers.
 
 ## Tech stack
 
@@ -25,7 +26,10 @@ tested in isolation.
 | Desktop shell  | Electron                                           |
 | Local database | SQLite via `better-sqlite3` (synchronous driver)   |
 | Cloud sync     | Firebase Firestore (optional), config via `dotenv` |
-| Tests          | Jest + ts-jest                                     |
+| Unit tests     | Jest + ts-jest                                     |
+| E2E tests      | Playwright                                         |
+| Lint / format  | ESLint + Prettier                                  |
+| Packaging      | electron-builder                                   |
 | Native rebuild | `@electron/rebuild`                                |
 
 ## Architecture
@@ -97,6 +101,9 @@ src/
 tests/
   taskService.test.ts
   syncService.test.ts
+  firestoreCloudGateway.test.ts
+e2e/
+  app.spec.ts            Playwright end-to-end test
 ```
 
 ## Getting started
@@ -135,6 +142,30 @@ npm test
 
 This rebuilds `better-sqlite3` for Node, then runs the Jest suite (TaskService against an
 in-memory SQLite database, SyncService with an in-memory file gateway and a fake cloud).
+
+### End-to-end tests
+
+```bash
+npm run test:e2e
+```
+
+Builds the app, rebuilds the native module for Electron and runs the Playwright suite,
+which launches the real app and drives the UI (add → edit → filter → delete).
+
+### Lint and format
+
+```bash
+npm run lint          # ESLint
+npm run format        # Prettier (write)
+npm run format:check  # Prettier (verify)
+```
+
+### Package a distributable
+
+```bash
+npm run pack   # unpacked app in release/ (fast)
+npm run dist   # AppImage in release/
+```
 
 ## Cloud sync with Firestore (optional)
 
