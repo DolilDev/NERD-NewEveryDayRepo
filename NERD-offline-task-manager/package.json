@@ -9,7 +9,10 @@
     "rebuild:electron": "electron-rebuild -f -w better-sqlite3",
     "start": "npm run build && npm run rebuild:electron && electron .",
     "pretest": "npm rebuild better-sqlite3",
-    "test": "jest"
+    "test": "jest",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "author": "DolilDev",
   "license": "MIT",
@@ -20,12 +23,18 @@
   },
   "devDependencies": {
     "@electron/rebuild": "^4.0.4",
+    "@eslint/js": "^10.0.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.9.3",
     "electron": "^42.4.0",
+    "eslint": "^10.5.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.6.0",
     "jest": "^30.4.2",
+    "prettier": "^3.8.4",
     "ts-jest": "^29.4.11",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.61.0"
   }
 }

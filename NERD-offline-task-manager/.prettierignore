@@ -1,0 +1,9 @@
+dist/
+node_modules/
+coverage/
+release/
+package-lock.json
+
+# Quest artifacts — leave verbatim
+QUEST.md
+PLAN_BUDOWY.md
