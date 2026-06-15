@@ -42,10 +42,32 @@ export interface IpcFailure {
 }
 export type IpcResult<T> = IpcSuccess<T> | IpcFailure;
 
+/** Outcome of importing a JSON file: how many tasks were created vs updated. */
+export interface ImportSummary {
+  created: number;
+  updated: number;
+  total: number;
+}
+
+/** Result of an export action (may be cancelled from the file dialog). */
+export interface ExportResult {
+  canceled: boolean;
+  count?: number;
+  path?: string;
+}
+
+/** Result of an import action (may be cancelled from the file dialog). */
+export interface ImportResult {
+  canceled: boolean;
+  summary?: ImportSummary;
+}
+
 /** The typed surface exposed to the renderer as `window.api`. */
 export interface TaskApi {
   listTasks(): Promise<IpcResult<Task[]>>;
   addTask(input: CreateTaskInput): Promise<IpcResult<Task>>;
   editTask(id: string, input: UpdateTaskInput): Promise<IpcResult<Task>>;
   deleteTask(id: string): Promise<IpcResult<void>>;
+  exportTasks(): Promise<IpcResult<ExportResult>>;
+  importTasks(): Promise<IpcResult<ImportResult>>;
 }

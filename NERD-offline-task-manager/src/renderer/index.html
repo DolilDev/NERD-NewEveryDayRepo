@@ -33,7 +33,18 @@
       }
       h1 {
         font-size: 1.5rem;
-        margin: 0 0 1rem;
+        margin: 0;
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .toolbar {
+        display: flex;
+        gap: 0.5rem;
       }
       .card {
         background: var(--card);
@@ -177,7 +188,13 @@
   </head>
   <body>
     <main>
-      <h1>NERD Offline Task Manager</h1>
+      <div class="header">
+        <h1>NERD Offline Task Manager</h1>
+        <div class="toolbar">
+          <button id="export-button" type="button" class="btn btn--ghost">Export JSON</button>
+          <button id="import-button" type="button" class="btn btn--ghost">Import JSON</button>
+        </div>
+      </div>
 
       <div id="message" class="message" hidden></div>
 

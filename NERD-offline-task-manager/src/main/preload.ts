@@ -8,6 +8,8 @@ const api: TaskApi = {
   addTask: (input: CreateTaskInput) => ipcRenderer.invoke('tasks:add', input),
   editTask: (id: string, input: UpdateTaskInput) => ipcRenderer.invoke('tasks:edit', id, input),
   deleteTask: (id: string) => ipcRenderer.invoke('tasks:delete', id),
+  exportTasks: () => ipcRenderer.invoke('sync:export'),
+  importTasks: () => ipcRenderer.invoke('sync:import'),
 };
 
 // The only thing the renderer can reach. No Node, no database — just this API.

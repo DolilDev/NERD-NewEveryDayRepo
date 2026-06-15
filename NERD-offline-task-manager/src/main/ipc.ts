@@ -1,5 +1,6 @@
-import { ipcMain } from 'electron';
+import { ipcMain, dialog, BrowserWindow } from 'electron';
 import type { TaskService } from './services/taskService';
+import type { SyncService } from './services/syncService';
 import type { IpcResult } from '../shared/types';
 import { IpcChannels } from './ipcChannels';
 
@@ -15,10 +16,19 @@ function serializeError(error: unknown): { name: string; message: string } {
   return { name: 'Error', message: 'An unexpected error occurred. Please try again.' };
 }
 
-/** Runs a handler and wraps the outcome in the IpcResult envelope. */
+/** Runs a sync handler and wraps the outcome in the IpcResult envelope. */
 function run<T>(fn: () => T): IpcResult<T> {
   try {
     return { ok: true, data: fn() };
+  } catch (error) {
+    return { ok: false, error: serializeError(error) };
+  }
+}
+
+/** Runs an async handler and wraps the outcome in the IpcResult envelope. */
+async function runAsync<T>(fn: () => Promise<T>): Promise<IpcResult<T>> {
+  try {
+    return { ok: true, data: await fn() };
   } catch (error) {
     return { ok: false, error: serializeError(error) };
   }
@@ -32,4 +42,45 @@ export function registerTaskIpc(taskService: TaskService): void {
     run(() => taskService.edit(id, input)),
   );
   ipcMain.handle(IpcChannels.deleteTask, (_event, id) => run(() => taskService.remove(id)));
+}
+
+/** Bridges the renderer to JSON export/import, including the file dialogs. */
+export function registerSyncIpc(syncService: SyncService): void {
+  ipcMain.handle(IpcChannels.exportTasks, () =>
+    runAsync(async () => {
+      const window = BrowserWindow.getFocusedWindow();
+      const options = {
+        title: 'Export tasks',
+        defaultPath: 'tasks.json',
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      };
+      const result = window
+        ? await dialog.showSaveDialog(window, options)
+        : await dialog.showSaveDialog(options);
+      if (result.canceled || !result.filePath) {
+        return { canceled: true };
+      }
+      const count = await syncService.exportToJson(result.filePath);
+      return { canceled: false, count, path: result.filePath };
+    }),
+  );
+
+  ipcMain.handle(IpcChannels.importTasks, () =>
+    runAsync(async () => {
+      const window = BrowserWindow.getFocusedWindow();
+      const options = {
+        title: 'Import tasks',
+        properties: ['openFile' as const],
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      };
+      const result = window
+        ? await dialog.showOpenDialog(window, options)
+        : await dialog.showOpenDialog(options);
+      if (result.canceled || result.filePaths.length === 0) {
+        return { canceled: true };
+      }
+      const summary = await syncService.importFromJson(result.filePaths[0]);
+      return { canceled: false, summary };
+    }),
+  );
 }

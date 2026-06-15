@@ -6,4 +6,6 @@ export const IpcChannels = {
   addTask: 'tasks:add',
   editTask: 'tasks:edit',
   deleteTask: 'tasks:delete',
+  exportTasks: 'sync:export',
+  importTasks: 'sync:import',
 } as const;

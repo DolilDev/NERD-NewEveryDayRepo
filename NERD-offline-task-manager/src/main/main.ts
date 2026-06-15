@@ -3,7 +3,8 @@ import * as path from 'path';
 import { openDatabase } from './db/connection';
 import { TaskRepository } from './db/taskRepository';
 import { TaskService } from './services/taskService';
-import { registerTaskIpc } from './ipc';
+import { SyncService, nodeFileGateway } from './services/syncService';
+import { registerTaskIpc, registerSyncIpc } from './ipc';
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -23,8 +24,9 @@ function createWindow(): BrowserWindow {
 
 app.whenReady().then(() => {
   const dbPath = path.join(app.getPath('userData'), 'tasks.sqlite');
-  const taskService = new TaskService(new TaskRepository(openDatabase(dbPath)));
-  registerTaskIpc(taskService);
+  const repository = new TaskRepository(openDatabase(dbPath));
+  registerTaskIpc(new TaskService(repository));
+  registerSyncIpc(new SyncService(repository, nodeFileGateway));
 
   createWindow();
 

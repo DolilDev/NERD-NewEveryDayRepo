@@ -26,6 +26,8 @@ const descriptionInput = el<HTMLTextAreaElement>('description');
 const statusSelect = el<HTMLSelectElement>('status');
 const submitButton = el<HTMLButtonElement>('submit-button');
 const cancelButton = el<HTMLButtonElement>('cancel-button');
+const exportButton = el<HTMLButtonElement>('export-button');
+const importButton = el<HTMLButtonElement>('import-button');
 const listEl = el<HTMLUListElement>('task-list');
 const emptyState = el<HTMLParagraphElement>('empty-state');
 const messageEl = el<HTMLDivElement>('message');
@@ -181,6 +183,36 @@ form.addEventListener('submit', (event) => {
 cancelButton.addEventListener('click', () => {
   setEditing(null);
   clearMessage();
+});
+
+exportButton.addEventListener('click', () => {
+  void (async () => {
+    const result = await window.api.exportTasks();
+    if (!result.ok) {
+      showMessage(result.error.message, 'error');
+      return;
+    }
+    if (result.data.canceled) {
+      return;
+    }
+    showMessage(`Exported ${result.data.count} task(s).`, 'success');
+  })();
+});
+
+importButton.addEventListener('click', () => {
+  void (async () => {
+    const result = await window.api.importTasks();
+    if (!result.ok) {
+      showMessage(result.error.message, 'error');
+      return;
+    }
+    if (result.data.canceled || !result.data.summary) {
+      return;
+    }
+    const { created, updated } = result.data.summary;
+    showMessage(`Imported: ${created} new, ${updated} updated.`, 'success');
+    await refresh();
+  })();
 });
 
 void refresh();
