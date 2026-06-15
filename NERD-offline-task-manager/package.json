@@ -1,0 +1,29 @@
+{
+  "name": "nerd-offline-task-manager",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Offline-first desktop task manager built with Electron, TypeScript and SQLite, with JSON import/export and optional Firebase Firestore cloud sync.",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.renderer.json && node scripts/copy-assets.js",
+    "rebuild:electron": "electron-rebuild -f -w better-sqlite3",
+    "start": "npm run build && npm run rebuild:electron && electron .",
+    "pretest": "npm rebuild better-sqlite3",
+    "test": "jest"
+  },
+  "author": "DolilDev",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^12.10.1"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.4",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.9.3",
+    "electron": "^42.4.0",
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.11",
+    "typescript": "^6.0.3"
+  }
+}
