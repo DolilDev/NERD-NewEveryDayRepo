@@ -8,4 +8,7 @@ export const IpcChannels = {
   deleteTask: 'tasks:delete',
   exportTasks: 'sync:export',
   importTasks: 'sync:import',
+  cloudStatus: 'cloud:status',
+  cloudPush: 'cloud:push',
+  cloudPull: 'cloud:pull',
 } as const;

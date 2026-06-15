@@ -4,6 +4,9 @@ import { openDatabase } from './db/connection';
 import { TaskRepository } from './db/taskRepository';
 import { TaskService } from './services/taskService';
 import { SyncService, nodeFileGateway } from './services/syncService';
+import { FirestoreCloudGateway } from './cloud/firestoreCloudGateway';
+import { getFirebaseConfig, getTasksCollection } from './config';
+import type { CloudGateway } from './cloud/cloudGateway';
 import { registerTaskIpc, registerSyncIpc } from './ipc';
 
 function createWindow(): BrowserWindow {
@@ -25,8 +28,15 @@ function createWindow(): BrowserWindow {
 app.whenReady().then(() => {
   const dbPath = path.join(app.getPath('userData'), 'tasks.sqlite');
   const repository = new TaskRepository(openDatabase(dbPath));
+
+  const firebaseConfig = getFirebaseConfig();
+  let cloud: CloudGateway | undefined;
+  if (firebaseConfig) {
+    cloud = new FirestoreCloudGateway(firebaseConfig, getTasksCollection());
+  }
+
   registerTaskIpc(new TaskService(repository));
-  registerSyncIpc(new SyncService(repository, nodeFileGateway));
+  registerSyncIpc(new SyncService(repository, nodeFileGateway, undefined, cloud));
 
   createWindow();
 

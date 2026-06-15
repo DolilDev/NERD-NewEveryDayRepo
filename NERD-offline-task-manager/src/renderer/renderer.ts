@@ -28,6 +28,9 @@ const submitButton = el<HTMLButtonElement>('submit-button');
 const cancelButton = el<HTMLButtonElement>('cancel-button');
 const exportButton = el<HTMLButtonElement>('export-button');
 const importButton = el<HTMLButtonElement>('import-button');
+const pushButton = el<HTMLButtonElement>('push-button');
+const pullButton = el<HTMLButtonElement>('pull-button');
+const cloudStatusEl = el<HTMLParagraphElement>('cloud-status');
 const listEl = el<HTMLUListElement>('task-list');
 const emptyState = el<HTMLParagraphElement>('empty-state');
 const messageEl = el<HTMLDivElement>('message');
@@ -215,4 +218,39 @@ importButton.addEventListener('click', () => {
   })();
 });
 
+pushButton.addEventListener('click', () => {
+  void (async () => {
+    const result = await window.api.pushToCloud();
+    if (result.ok) {
+      showMessage(`Pushed ${result.data.count} task(s) to the cloud.`, 'success');
+    } else {
+      showMessage(result.error.message, 'error');
+    }
+  })();
+});
+
+pullButton.addEventListener('click', () => {
+  void (async () => {
+    const result = await window.api.pullFromCloud();
+    if (!result.ok) {
+      showMessage(result.error.message, 'error');
+      return;
+    }
+    const { created, updated } = result.data.summary;
+    showMessage(`Pulled from cloud: ${created} new, ${updated} updated.`, 'success');
+    await refresh();
+  })();
+});
+
+async function updateCloudStatus(): Promise<void> {
+  const result = await window.api.cloudStatus();
+  const enabled = result.ok && result.data.enabled;
+  pushButton.disabled = !enabled;
+  pullButton.disabled = !enabled;
+  cloudStatusEl.textContent = enabled
+    ? 'Cloud sync: ready (Firebase configured).'
+    : 'Cloud sync: not configured — add Firebase keys to .env to enable.';
+}
+
 void refresh();
+void updateCloudStatus();

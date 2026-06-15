@@ -2,6 +2,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { SyncError } from '../../shared/errors';
 import { validateTitle, normalizeDescription, validateStatus } from './validation';
 import type { TaskRepository } from '../db/taskRepository';
+import type { CloudGateway } from '../cloud/cloudGateway';
 import type { Task, ImportSummary } from '../../shared/types';
 
 /** Minimal file-IO seam so the service can be tested without touching disk. */
@@ -29,7 +30,44 @@ export class SyncService {
     private readonly repo: TaskRepository,
     private readonly files: FileGateway,
     private readonly now: () => string = () => new Date().toISOString(),
+    private readonly cloud?: CloudGateway,
   ) {}
+
+  /** Whether cloud sync is configured and available. */
+  isCloudEnabled(): boolean {
+    return this.cloud !== undefined;
+  }
+
+  /** Pushes every local task to the cloud and stamps them as synced. */
+  async pushToCloud(): Promise<number> {
+    const cloud = this.requireCloud();
+    const tasks = this.repo.getAll();
+    await cloud.push(tasks);
+    const syncedAt = this.now();
+    for (const task of tasks) {
+      this.repo.update({ ...task, syncedAt });
+    }
+    return tasks.length;
+  }
+
+  /** Pulls tasks from the cloud and merges them by id, same as JSON import. */
+  async pullFromCloud(): Promise<ImportSummary> {
+    const cloud = this.requireCloud();
+    const remote = await cloud.pull();
+    const syncedAt = this.now();
+    const tasks = remote.map((item, index) => ({
+      ...this.validateImported(item, index),
+      syncedAt,
+    }));
+    return this.merge(tasks);
+  }
+
+  private requireCloud(): CloudGateway {
+    if (!this.cloud) {
+      throw new SyncError('Cloud sync is not configured. Add Firebase credentials to .env.');
+    }
+    return this.cloud;
+  }
 
   async exportToJson(filePath: string): Promise<number> {
     const tasks = this.repo.getAll();

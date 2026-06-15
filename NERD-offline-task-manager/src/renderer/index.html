@@ -45,6 +45,16 @@
       .toolbar {
         display: flex;
         gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .cloud-status {
+        margin: -0.5rem 0 1rem;
+        font-size: 0.82rem;
+        color: var(--muted);
       }
       .card {
         background: var(--card);
@@ -193,8 +203,12 @@
         <div class="toolbar">
           <button id="export-button" type="button" class="btn btn--ghost">Export JSON</button>
           <button id="import-button" type="button" class="btn btn--ghost">Import JSON</button>
+          <button id="push-button" type="button" class="btn btn--ghost" disabled>Push to cloud</button>
+          <button id="pull-button" type="button" class="btn btn--ghost" disabled>Pull from cloud</button>
         </div>
       </div>
+
+      <p id="cloud-status" class="cloud-status">Cloud sync: checking…</p>
 
       <div id="message" class="message" hidden></div>
 

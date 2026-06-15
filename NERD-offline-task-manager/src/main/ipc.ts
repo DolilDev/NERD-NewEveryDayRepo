@@ -83,4 +83,14 @@ export function registerSyncIpc(syncService: SyncService): void {
       return { canceled: false, summary };
     }),
   );
+
+  ipcMain.handle(IpcChannels.cloudStatus, () =>
+    run(() => ({ enabled: syncService.isCloudEnabled() })),
+  );
+  ipcMain.handle(IpcChannels.cloudPush, () =>
+    runAsync(async () => ({ count: await syncService.pushToCloud() })),
+  );
+  ipcMain.handle(IpcChannels.cloudPull, () =>
+    runAsync(async () => ({ summary: await syncService.pullFromCloud() })),
+  );
 }

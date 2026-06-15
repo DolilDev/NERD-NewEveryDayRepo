@@ -10,6 +10,9 @@ const api: TaskApi = {
   deleteTask: (id: string) => ipcRenderer.invoke('tasks:delete', id),
   exportTasks: () => ipcRenderer.invoke('sync:export'),
   importTasks: () => ipcRenderer.invoke('sync:import'),
+  cloudStatus: () => ipcRenderer.invoke('cloud:status'),
+  pushToCloud: () => ipcRenderer.invoke('cloud:push'),
+  pullFromCloud: () => ipcRenderer.invoke('cloud:pull'),
 };
 
 // The only thing the renderer can reach. No Node, no database — just this API.

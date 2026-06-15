@@ -70,4 +70,7 @@ export interface TaskApi {
   deleteTask(id: string): Promise<IpcResult<void>>;
   exportTasks(): Promise<IpcResult<ExportResult>>;
   importTasks(): Promise<IpcResult<ImportResult>>;
+  cloudStatus(): Promise<IpcResult<{ enabled: boolean }>>;
+  pushToCloud(): Promise<IpcResult<{ count: number }>>;
+  pullFromCloud(): Promise<IpcResult<{ summary: ImportSummary }>>;
 }
