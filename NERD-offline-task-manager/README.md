@@ -19,14 +19,14 @@ tested in isolation.
 
 ## Tech stack
 
-| Area            | Choice                                             |
-| --------------- | -------------------------------------------------- |
-| Language        | TypeScript                                         |
-| Desktop shell   | Electron                                           |
-| Local database  | SQLite via `better-sqlite3` (synchronous driver)   |
-| Cloud sync      | Firebase Firestore (optional), config via `dotenv` |
-| Tests           | Jest + ts-jest                                     |
-| Native rebuild  | `@electron/rebuild`                                |
+| Area           | Choice                                             |
+| -------------- | -------------------------------------------------- |
+| Language       | TypeScript                                         |
+| Desktop shell  | Electron                                           |
+| Local database | SQLite via `better-sqlite3` (synchronous driver)   |
+| Cloud sync     | Firebase Firestore (optional), config via `dotenv` |
+| Tests          | Jest + ts-jest                                     |
+| Native rebuild | `@electron/rebuild`                                |
 
 ## Architecture
 
@@ -152,6 +152,7 @@ The app is fully usable without any cloud configuration. To enable Firestore pus
 
    Optional keys (`FIREBASE_AUTH_DOMAIN`, `FIREBASE_STORAGE_BUCKET`,
    `FIREBASE_MESSAGING_SENDER_ID`, `FIREBASE_TASKS_COLLECTION`) have sensible defaults.
+
 3. Restart the app. The cloud status line turns to "ready" and the **Push to cloud** /
    **Pull from cloud** buttons become enabled.
 

@@ -21,7 +21,12 @@
         box-sizing: border-box;
       }
       body {
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          sans-serif;
         margin: 0;
         padding: 2rem 1.5rem 3rem;
         background: var(--bg);
@@ -203,8 +208,12 @@
         <div class="toolbar">
           <button id="export-button" type="button" class="btn btn--ghost">Export JSON</button>
           <button id="import-button" type="button" class="btn btn--ghost">Import JSON</button>
-          <button id="push-button" type="button" class="btn btn--ghost" disabled>Push to cloud</button>
-          <button id="pull-button" type="button" class="btn btn--ghost" disabled>Pull from cloud</button>
+          <button id="push-button" type="button" class="btn btn--ghost" disabled>
+            Push to cloud
+          </button>
+          <button id="pull-button" type="button" class="btn btn--ghost" disabled>
+            Pull from cloud
+          </button>
         </div>
       </div>
 
@@ -216,7 +225,13 @@
         <form id="task-form">
           <div>
             <label for="title">Title</label>
-            <input id="title" type="text" maxlength="200" placeholder="What needs doing?" autocomplete="off" />
+            <input
+              id="title"
+              type="text"
+              maxlength="200"
+              placeholder="What needs doing?"
+              autocomplete="off"
+            />
           </div>
           <div>
             <label for="description">Description</label>

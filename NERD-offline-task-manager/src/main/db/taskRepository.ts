@@ -41,16 +41,12 @@ export class TaskRepository {
   }
 
   getAll(): Task[] {
-    const rows = this.db
-      .prepare('SELECT * FROM tasks ORDER BY createdAt DESC')
-      .all() as TaskRow[];
+    const rows = this.db.prepare('SELECT * FROM tasks ORDER BY createdAt DESC').all() as TaskRow[];
     return rows.map(rowToTask);
   }
 
   getById(id: string): Task | undefined {
-    const row = this.db
-      .prepare('SELECT * FROM tasks WHERE id = ?')
-      .get(id) as TaskRow | undefined;
+    const row = this.db.prepare('SELECT * FROM tasks WHERE id = ?').get(id) as TaskRow | undefined;
     return row ? rowToTask(row) : undefined;
   }
 
