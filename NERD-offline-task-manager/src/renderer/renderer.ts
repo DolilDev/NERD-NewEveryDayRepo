@@ -34,7 +34,16 @@ const cloudStatusEl = el<HTMLParagraphElement>('cloud-status');
 const listEl = el<HTMLUListElement>('task-list');
 const emptyState = el<HTMLParagraphElement>('empty-state');
 const messageEl = el<HTMLDivElement>('message');
+const filterSelect = el<HTMLSelectElement>('filter');
+const sortSelect = el<HTMLSelectElement>('sort');
+const taskCountEl = el<HTMLSpanElement>('task-count');
 
+type FilterValue = 'all' | TaskStatus;
+type SortValue = 'newest' | 'oldest' | 'title';
+
+let allTasks: Task[] = [];
+let currentFilter: FilterValue = 'all';
+let currentSort: SortValue = 'newest';
 let editingId: string | null = null;
 let messageTimer: number | undefined;
 
@@ -77,7 +86,6 @@ function setEditing(task: Task | null): void {
 
 function renderTasks(tasks: Task[]): void {
   listEl.replaceChildren();
-  emptyState.hidden = tasks.length > 0;
 
   for (const task of tasks) {
     const item = document.createElement('li');
@@ -133,10 +141,54 @@ function renderTasks(tasks: Task[]): void {
   }
 }
 
+function sortTasks(tasks: Task[]): Task[] {
+  const sorted = [...tasks];
+  switch (currentSort) {
+    case 'oldest':
+      return sorted.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    case 'title':
+      return sorted.sort((a, b) => a.title.localeCompare(b.title));
+    case 'newest':
+    default:
+      return sorted.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+}
+
+function updateCount(shown: number): void {
+  const total = allTasks.length;
+  const done = allTasks.filter((task) => task.status === 'done').length;
+  if (total === 0) {
+    taskCountEl.textContent = 'No tasks';
+    return;
+  }
+  const base = `${total} task${total === 1 ? '' : 's'} · ${done} done`;
+  taskCountEl.textContent = currentFilter === 'all' ? base : `${base} · ${shown} shown`;
+}
+
+function render(): void {
+  const filtered =
+    currentFilter === 'all' ? allTasks : allTasks.filter((task) => task.status === currentFilter);
+  const sorted = sortTasks(filtered);
+
+  renderTasks(sorted);
+  updateCount(filtered.length);
+
+  if (allTasks.length === 0) {
+    emptyState.textContent = 'No tasks yet. Add your first one above.';
+    emptyState.hidden = false;
+  } else if (sorted.length === 0) {
+    emptyState.textContent = 'No tasks match this filter.';
+    emptyState.hidden = false;
+  } else {
+    emptyState.hidden = true;
+  }
+}
+
 async function refresh(): Promise<void> {
   const result = await window.api.listTasks();
   if (result.ok) {
-    renderTasks(result.data);
+    allTasks = result.data;
+    render();
   } else {
     showMessage(result.error.message, 'error');
   }
@@ -251,6 +303,16 @@ async function updateCloudStatus(): Promise<void> {
     ? 'Cloud sync: ready (Firebase configured).'
     : 'Cloud sync: not configured — add Firebase keys to .env to enable.';
 }
+
+filterSelect.addEventListener('change', () => {
+  currentFilter = filterSelect.value as FilterValue;
+  render();
+});
+
+sortSelect.addEventListener('change', () => {
+  currentSort = sortSelect.value as SortValue;
+  render();
+});
 
 void refresh();
 void updateCloudStatus();

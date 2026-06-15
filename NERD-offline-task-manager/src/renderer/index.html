@@ -199,6 +199,26 @@
         text-align: center;
         padding: 1.5rem 0;
       }
+      .list-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+      }
+      .task-count {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      .list-controls {
+        display: flex;
+        gap: 0.5rem;
+      }
+      .list-controls select {
+        width: auto;
+        padding: 0.35rem 0.5rem;
+        font-size: 0.85rem;
+      }
     </style>
   </head>
   <body>
@@ -251,6 +271,23 @@
           </div>
         </form>
       </section>
+
+      <div class="list-header">
+        <span id="task-count" class="task-count">No tasks</span>
+        <div class="list-controls">
+          <select id="filter" aria-label="Filter by status">
+            <option value="all">All statuses</option>
+            <option value="todo">To do</option>
+            <option value="in_progress">In progress</option>
+            <option value="done">Done</option>
+          </select>
+          <select id="sort" aria-label="Sort tasks">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="title">Title A–Z</option>
+          </select>
+        </div>
+      </div>
 
       <p id="empty-state" class="empty-state" hidden>No tasks yet. Add your first one above.</p>
       <ul id="task-list" class="task-list"></ul>
