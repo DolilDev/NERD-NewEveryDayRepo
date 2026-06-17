@@ -7,6 +7,7 @@ makes it trivial to spin up an isolated app for testing.
 
 from flask import Flask, jsonify
 from flask_login import LoginManager
+from werkzeug.exceptions import HTTPException
 
 from backend.config import Config
 from backend.models import User, db
@@ -14,6 +15,21 @@ from backend.models import User, db
 # Extensions are created at module level (unbound) and initialised against a
 # concrete app inside ``create_app``.
 login_manager = LoginManager()
+
+
+def register_error_handlers(app):
+    """Return JSON (never HTML) for the common error codes."""
+
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(error):
+        # Covers 400, 401, 403, 404, 405, ... with their proper status codes.
+        return jsonify(error=error.description), error.code
+
+    @app.errorhandler(Exception)
+    def handle_unexpected_error(error):
+        # Anything not already an HTTPException is an unexpected 500.
+        db.session.rollback()
+        return jsonify(error="Internal server error"), 500
 
 
 def create_app(config_class=Config):
@@ -37,6 +53,9 @@ def create_app(config_class=Config):
     def unauthorized():
         # API clients expect JSON 401s, never an HTML login redirect.
         return jsonify(error="Authentication required"), 401
+
+    # JSON error handlers (before blueprints so they apply app-wide).
+    register_error_handlers(app)
 
     # Register API blueprints.
     from backend.auth import auth_bp
