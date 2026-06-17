@@ -114,3 +114,35 @@ def create_transaction():
     db.session.add(transaction)
     db.session.commit()
     return jsonify(transaction.to_dict()), 201
+
+
+@transactions_bp.route("/transactions/<int:transaction_id>", methods=["PUT"])
+@login_required
+def update_transaction(transaction_id):
+    """Update one of the current user's transactions (same validation as create)."""
+    transaction = _get_owned_transaction_or_404(transaction_id)
+    if transaction is None:
+        return jsonify(error="Transaction not found"), 404
+
+    data = request.get_json(silent=True)
+    cleaned, error = _validate_payload(data)
+    if error:
+        return jsonify(error=error), 400
+
+    for field, value in cleaned.items():
+        setattr(transaction, field, value)
+    db.session.commit()
+    return jsonify(transaction.to_dict()), 200
+
+
+@transactions_bp.route("/transactions/<int:transaction_id>", methods=["DELETE"])
+@login_required
+def delete_transaction(transaction_id):
+    """Delete one of the current user's transactions."""
+    transaction = _get_owned_transaction_or_404(transaction_id)
+    if transaction is None:
+        return jsonify(error="Transaction not found"), 404
+
+    db.session.delete(transaction)
+    db.session.commit()
+    return jsonify(message="Transaction deleted"), 200
