@@ -68,6 +68,31 @@ def _validate_payload(data):
     }, None
 
 
+def _apply_filters(query):
+    """Apply optional ``start``/``end``/``category`` query params to a query.
+
+    Returns ``(query, None)`` or ``(None, error_message)`` for bad date input.
+    """
+    start = request.args.get("start")
+    end = request.args.get("end")
+    category = request.args.get("category")
+
+    if start:
+        try:
+            query = query.filter(Transaction.date >= _parse_date(start))
+        except (TypeError, ValueError):
+            return None, "start must be in YYYY-MM-DD format"
+    if end:
+        try:
+            query = query.filter(Transaction.date <= _parse_date(end))
+        except (TypeError, ValueError):
+            return None, "end must be in YYYY-MM-DD format"
+    if category:
+        query = query.filter(Transaction.category == category)
+
+    return query, None
+
+
 def _get_owned_transaction_or_404(transaction_id):
     """Fetch a transaction by id, but only if it belongs to the current user.
 
@@ -82,12 +107,15 @@ def _get_owned_transaction_or_404(transaction_id):
 @transactions_bp.route("/transactions", methods=["GET"])
 @login_required
 def list_transactions():
-    """List all transactions belonging to the current user (newest first)."""
-    transactions = (
-        Transaction.query.filter_by(user_id=current_user.id)
-        .order_by(Transaction.date.desc(), Transaction.id.desc())
-        .all()
-    )
+    """List the current user's transactions (newest first), with optional filters."""
+    query = Transaction.query.filter_by(user_id=current_user.id)
+    query, error = _apply_filters(query)
+    if error:
+        return jsonify(error=error), 400
+
+    transactions = query.order_by(
+        Transaction.date.desc(), Transaction.id.desc()
+    ).all()
     return jsonify([t.to_dict() for t in transactions]), 200
 
 
@@ -146,3 +174,26 @@ def delete_transaction(transaction_id):
     db.session.delete(transaction)
     db.session.commit()
     return jsonify(message="Transaction deleted"), 200
+
+
+@transactions_bp.route("/summary", methods=["GET"])
+@login_required
+def summary():
+    """Return income/expense totals and balance for the current user.
+
+    Honours the same ``start``/``end``/``category`` filters as the list endpoint.
+    """
+    query = Transaction.query.filter_by(user_id=current_user.id)
+    query, error = _apply_filters(query)
+    if error:
+        return jsonify(error=error), 400
+
+    transactions = query.all()
+    total_income = sum(t.amount for t in transactions if t.type == "income")
+    total_expenses = sum(t.amount for t in transactions if t.type == "expense")
+
+    return jsonify(
+        total_income=round(total_income, 2),
+        total_expenses=round(total_expenses, 2),
+        balance=round(total_income - total_expenses, 2),
+    ), 200
