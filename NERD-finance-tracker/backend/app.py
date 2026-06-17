@@ -59,8 +59,10 @@ def create_app(config_class=Config):
 
     # Register API blueprints.
     from backend.auth import auth_bp
+    from backend.transactions import transactions_bp
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(transactions_bp)
 
     # Create tables for any model that has been imported.
     with app.app_context():
