@@ -27,14 +27,27 @@ def client(app):
     return app.test_client()
 
 
-def register_and_login(client, username, password="secret"):
-    """Helper: register a user and log them in on the given client."""
-    client.post("/api/register", json={"username": username, "password": password})
-    client.post("/api/login", json={"username": username, "password": password})
-    return client
+@pytest.fixture
+def make_user_client(app):
+    """Factory: returns a fresh client registered and logged in as ``username``.
+
+    Handy for multi-user tests (e.g. isolation) where each user needs its own
+    session cookie.
+    """
+    def _make(username, password="secret"):
+        client = app.test_client()
+        client.post(
+            "/api/register", json={"username": username, "password": password}
+        )
+        client.post(
+            "/api/login", json={"username": username, "password": password}
+        )
+        return client
+
+    return _make
 
 
 @pytest.fixture
-def auth_client(app):
+def auth_client(make_user_client):
     """A test client already registered and logged in as 'tester'."""
-    return register_and_login(app.test_client(), "tester")
+    return make_user_client("tester")
