@@ -68,6 +68,39 @@ def _validate_payload(data):
     }, None
 
 
+def _get_owned_transaction_or_404(transaction_id):
+    """Fetch a transaction by id, but only if it belongs to the current user.
+
+    Returns the transaction or ``None`` (caller turns ``None`` into a 404).
+    Filtering by ``user_id`` here is what enforces per-user isolation.
+    """
+    return Transaction.query.filter_by(
+        id=transaction_id, user_id=current_user.id
+    ).first()
+
+
+@transactions_bp.route("/transactions", methods=["GET"])
+@login_required
+def list_transactions():
+    """List all transactions belonging to the current user (newest first)."""
+    transactions = (
+        Transaction.query.filter_by(user_id=current_user.id)
+        .order_by(Transaction.date.desc(), Transaction.id.desc())
+        .all()
+    )
+    return jsonify([t.to_dict() for t in transactions]), 200
+
+
+@transactions_bp.route("/transactions/<int:transaction_id>", methods=["GET"])
+@login_required
+def get_transaction(transaction_id):
+    """Return a single transaction owned by the current user, else 404."""
+    transaction = _get_owned_transaction_or_404(transaction_id)
+    if transaction is None:
+        return jsonify(error="Transaction not found"), 404
+    return jsonify(transaction.to_dict()), 200
+
+
 @transactions_bp.route("/transactions", methods=["POST"])
 @login_required
 def create_transaction():
