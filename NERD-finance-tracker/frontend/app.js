@@ -80,6 +80,7 @@ function cacheElements() {
     "summary-income", "summary-expenses", "summary-balance",
     "filter-start", "filter-end", "filter-category",
     "apply-filters", "clear-filters",
+    "balance-chart", "category-chart", "monthly-chart",
   ];
   ids.forEach((id) => {
     els[id] = document.getElementById(id);
@@ -108,6 +109,7 @@ function showAuth() {
 async function refresh() {
   try {
     await Promise.all([loadTransactions(), loadSummary()]);
+    renderCharts(state.transactions);
   } catch (err) {
     showMessage(els["app-message"], err.message);
   }
@@ -421,6 +423,133 @@ function wireAuth() {
   });
 
   els["logout-btn"].addEventListener("click", logout);
+}
+
+/* ---------- Charts ---------- */
+const charts = { balance: null, category: null, monthly: null };
+
+const PALETTE = [
+  "#2563eb", "#16a34a", "#dc2626", "#f59e0b", "#8b5cf6",
+  "#ec4899", "#14b8a6", "#f97316", "#64748b", "#0ea5e9",
+];
+
+function paletteFor(count) {
+  const colors = [];
+  for (let i = 0; i < count; i += 1) {
+    colors.push(PALETTE[i % PALETTE.length]);
+  }
+  return colors;
+}
+
+function round2(value) {
+  return Math.round(value * 100) / 100;
+}
+
+/** Cumulative balance ordered by date. */
+function buildBalanceSeries(transactions) {
+  const byDate = {};
+  for (const t of transactions) {
+    const delta = t.type === "income" ? t.amount : -t.amount;
+    byDate[t.date] = (byDate[t.date] || 0) + delta;
+  }
+  const labels = Object.keys(byDate).sort();
+  let running = 0;
+  const data = labels.map((d) => {
+    running += byDate[d];
+    return round2(running);
+  });
+  return { labels, data };
+}
+
+/** Total expenses per category. */
+function buildCategorySeries(transactions) {
+  const byCategory = {};
+  for (const t of transactions) {
+    if (t.type !== "expense") continue;
+    byCategory[t.category] = (byCategory[t.category] || 0) + t.amount;
+  }
+  const labels = Object.keys(byCategory);
+  const data = labels.map((c) => round2(byCategory[c]));
+  return { labels, data };
+}
+
+/** Income vs expenses grouped by YYYY-MM. */
+function buildMonthlySeries(transactions) {
+  const byMonth = {};
+  for (const t of transactions) {
+    const month = t.date.slice(0, 7);
+    if (!byMonth[month]) byMonth[month] = { income: 0, expense: 0 };
+    byMonth[month][t.type] += t.amount;
+  }
+  const labels = Object.keys(byMonth).sort();
+  return {
+    labels,
+    income: labels.map((m) => round2(byMonth[m].income)),
+    expense: labels.map((m) => round2(byMonth[m].expense)),
+  };
+}
+
+function destroyCharts() {
+  Object.keys(charts).forEach((key) => {
+    if (charts[key]) {
+      charts[key].destroy();
+      charts[key] = null;
+    }
+  });
+}
+
+function renderCharts(transactions) {
+  // Chart.js is loaded from a CDN; bail out gracefully if it is unavailable.
+  if (typeof Chart === "undefined") return;
+
+  // Destroy previous instances so re-rendering never stacks canvases.
+  destroyCharts();
+
+  const noLegend = { plugins: { legend: { display: false } } };
+  const base = { responsive: true, maintainAspectRatio: false };
+
+  const balance = buildBalanceSeries(transactions);
+  charts.balance = new Chart(els["balance-chart"], {
+    type: "line",
+    data: {
+      labels: balance.labels,
+      datasets: [{
+        label: "Balance",
+        data: balance.data,
+        borderColor: "#2563eb",
+        backgroundColor: "rgba(37, 99, 235, 0.12)",
+        fill: true,
+        tension: 0.25,
+      }],
+    },
+    options: { ...base, ...noLegend },
+  });
+
+  const category = buildCategorySeries(transactions);
+  charts.category = new Chart(els["category-chart"], {
+    type: "pie",
+    data: {
+      labels: category.labels,
+      datasets: [{
+        data: category.data,
+        backgroundColor: paletteFor(category.labels.length),
+      }],
+    },
+    options: { ...base, plugins: { legend: { position: "bottom" } } },
+  });
+
+  const monthly = buildMonthlySeries(transactions);
+  charts.monthly = new Chart(els["monthly-chart"], {
+    type: "bar",
+    data: {
+      labels: monthly.labels,
+      datasets: [
+        { label: "Income", data: monthly.income, backgroundColor: "#16a34a" },
+        { label: "Expenses", data: monthly.expense, backgroundColor: "#dc2626" },
+      ],
+    },
+    options: { ...base, scales: { y: { beginAtZero: true } } },
+  });
 }
 
 /* ---------- Bootstrap ---------- */

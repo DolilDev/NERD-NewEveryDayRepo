@@ -157,7 +157,7 @@ input:focus, select:focus {
 
 /* ---------- Charts ---------- */
 .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-.chart-card canvas { max-height: 280px; }
+.chart-box { position: relative; height: 280px; }
 .charts-grid .chart-card:first-child { grid-column: 1 / -1; }
 
 /* ---------- Messages ---------- */
