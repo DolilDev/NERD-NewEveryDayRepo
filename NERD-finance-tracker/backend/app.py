@@ -64,6 +64,12 @@ def create_app(config_class=Config):
     app.register_blueprint(auth_bp)
     app.register_blueprint(transactions_bp)
 
+    # Serve the single-page frontend. Other assets (app.js, style.css) are
+    # served automatically from the static folder because static_url_path="".
+    @app.route("/")
+    def index():
+        return app.send_static_file("index.html")
+
     # Create tables for any model that has been imported.
     with app.app_context():
         db.create_all()
