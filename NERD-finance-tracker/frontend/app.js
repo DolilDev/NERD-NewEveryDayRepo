@@ -8,6 +8,12 @@
 
 const API = "/api";
 
+/** In-memory copy of the current user's transactions (drives the charts). */
+const state = { transactions: [] };
+
+/** Id of the transaction currently being edited, or null when adding. */
+let editingId = null;
+
 /** Error carrying an HTTP status so callers can react to it. */
 class ApiError extends Error {
   constructor(message, status) {
@@ -68,6 +74,9 @@ function cacheElements() {
     "tab-login", "tab-register", "login-form", "register-form",
     "login-username", "login-password", "register-username",
     "register-password", "auth-message", "app-message", "logout-btn",
+    "transaction-form", "form-title", "tx-id", "tx-type", "tx-amount",
+    "tx-category", "tx-date", "tx-description", "tx-submit", "tx-cancel",
+    "form-error", "transactions-body", "empty-state",
   ];
   ids.forEach((id) => {
     els[id] = document.getElementById(id);
@@ -90,11 +99,200 @@ function showAuth() {
 }
 
 /**
- * Reload all user data. Expanded in later steps (transactions, summary,
- * charts); defined here so the auth flow has something to call.
+ * Reload all user data. Summary and charts are added in later steps.
  */
 async function refresh() {
-  /* populated in later steps */
+  try {
+    await loadTransactions();
+  } catch (err) {
+    showMessage(els["app-message"], err.message);
+  }
+}
+
+/* ---------- Transactions: load & render ---------- */
+function formatMoney(value) {
+  return Number(value).toFixed(2);
+}
+
+function makeCell(text, className) {
+  const td = document.createElement("td");
+  td.textContent = text;
+  if (className) td.className = className;
+  return td;
+}
+
+async function loadTransactions() {
+  const transactions = await api("/transactions");
+  state.transactions = transactions;
+  renderTransactions(transactions);
+}
+
+function renderTransactions(transactions) {
+  const tbody = els["transactions-body"];
+  tbody.innerHTML = "";
+
+  if (!transactions.length) {
+    els["empty-state"].classList.remove("hidden");
+    return;
+  }
+  els["empty-state"].classList.add("hidden");
+
+  for (const tx of transactions) {
+    const tr = document.createElement("tr");
+
+    tr.appendChild(makeCell(tx.date));
+
+    const typeTd = document.createElement("td");
+    const pill = document.createElement("span");
+    pill.className = `type-pill ${tx.type}`;
+    pill.textContent = tx.type;
+    typeTd.appendChild(pill);
+    tr.appendChild(typeTd);
+
+    tr.appendChild(makeCell(tx.category));
+
+    const sign = tx.type === "income" ? "+" : "-";
+    const amountClass =
+      tx.type === "income" ? "amount-income" : "amount-expense";
+    tr.appendChild(makeCell(`${sign}${formatMoney(tx.amount)}`, `num ${amountClass}`));
+
+    const actionsTd = document.createElement("td");
+    actionsTd.className = "num";
+    const actions = document.createElement("div");
+    actions.className = "row-actions";
+
+    const editBtn = document.createElement("button");
+    editBtn.className = "btn btn-link";
+    editBtn.textContent = "Edit";
+    editBtn.dataset.action = "edit";
+    editBtn.dataset.id = tx.id;
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "btn btn-danger";
+    deleteBtn.textContent = "Delete";
+    deleteBtn.dataset.action = "delete";
+    deleteBtn.dataset.id = tx.id;
+
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
+    actionsTd.appendChild(actions);
+    tr.appendChild(actionsTd);
+
+    tbody.appendChild(tr);
+  }
+}
+
+/* ---------- Transactions: form (create / update) ---------- */
+function validateTransactionForm() {
+  const type = els["tx-type"].value;
+  const amount = els["tx-amount"].value;
+  const category = els["tx-category"].value.trim();
+  const date = els["tx-date"].value;
+
+  if (type !== "income" && type !== "expense") {
+    return "Please choose a transaction type.";
+  }
+  if (amount === "" || isNaN(Number(amount)) || Number(amount) <= 0) {
+    return "Amount must be a number greater than 0.";
+  }
+  if (!category) {
+    return "Category is required.";
+  }
+  if (!date) {
+    return "Please choose a date.";
+  }
+  return null;
+}
+
+function showFormError(text) {
+  els["form-error"].textContent = text;
+  els["form-error"].className = "form-error";
+  els["form-error"].classList.remove("hidden");
+}
+
+function resetForm() {
+  editingId = null;
+  els["transaction-form"].reset();
+  els["tx-id"].value = "";
+  els["form-title"].textContent = "Add transaction";
+  els["tx-submit"].textContent = "Add";
+  els["tx-cancel"].classList.add("hidden");
+  hideMessage(els["form-error"]);
+}
+
+function startEdit(tx) {
+  editingId = tx.id;
+  els["tx-id"].value = tx.id;
+  els["tx-type"].value = tx.type;
+  els["tx-amount"].value = tx.amount;
+  els["tx-category"].value = tx.category;
+  els["tx-date"].value = tx.date;
+  els["tx-description"].value = tx.description || "";
+  els["form-title"].textContent = "Edit transaction";
+  els["tx-submit"].textContent = "Save changes";
+  els["tx-cancel"].classList.remove("hidden");
+  hideMessage(els["form-error"]);
+  els["tx-amount"].focus();
+}
+
+async function submitTransaction(event) {
+  event.preventDefault();
+  hideMessage(els["form-error"]);
+
+  const error = validateTransactionForm();
+  if (error) {
+    showFormError(error);
+    return;
+  }
+
+  const payload = {
+    type: els["tx-type"].value,
+    amount: Number(els["tx-amount"].value),
+    category: els["tx-category"].value.trim(),
+    date: els["tx-date"].value,
+    description: els["tx-description"].value.trim() || null,
+  };
+
+  try {
+    if (editingId) {
+      await api(`/transactions/${editingId}`, { method: "PUT", body: payload });
+    } else {
+      await api("/transactions", { method: "POST", body: payload });
+    }
+    resetForm();
+    await refresh();
+  } catch (err) {
+    showFormError(err.message);
+  }
+}
+
+async function deleteTransaction(id) {
+  if (!window.confirm("Delete this transaction?")) return;
+  try {
+    await api(`/transactions/${id}`, { method: "DELETE" });
+    if (editingId === id) resetForm();
+    await refresh();
+  } catch (err) {
+    showMessage(els["app-message"], err.message);
+  }
+}
+
+/* ---------- Transactions UI wiring ---------- */
+function wireTransactions() {
+  els["transaction-form"].addEventListener("submit", submitTransaction);
+  els["tx-cancel"].addEventListener("click", resetForm);
+
+  els["transactions-body"].addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    const id = Number(btn.dataset.id);
+    if (btn.dataset.action === "edit") {
+      const tx = state.transactions.find((t) => t.id === id);
+      if (tx) startEdit(tx);
+    } else if (btn.dataset.action === "delete") {
+      deleteTransaction(id);
+    }
+  });
 }
 
 /* ---------- Auth actions ---------- */
@@ -185,6 +383,7 @@ function wireAuth() {
 function init() {
   cacheElements();
   wireAuth();
+  wireTransactions();
   checkSession();
 }
 
