@@ -9,7 +9,7 @@
 const API = "/api";
 
 /** In-memory copy of the current user's transactions (drives the charts). */
-const state = { transactions: [] };
+const state = { transactions: [], filters: {} };
 
 /** Id of the transaction currently being edited, or null when adding. */
 let editingId = null;
@@ -77,6 +77,9 @@ function cacheElements() {
     "transaction-form", "form-title", "tx-id", "tx-type", "tx-amount",
     "tx-category", "tx-date", "tx-description", "tx-submit", "tx-cancel",
     "form-error", "transactions-body", "empty-state",
+    "summary-income", "summary-expenses", "summary-balance",
+    "filter-start", "filter-end", "filter-category",
+    "apply-filters", "clear-filters",
   ];
   ids.forEach((id) => {
     els[id] = document.getElementById(id);
@@ -99,14 +102,55 @@ function showAuth() {
 }
 
 /**
- * Reload all user data. Summary and charts are added in later steps.
+ * Reload all user data (transactions + summary) for the active filters.
+ * Charts are added in the next step.
  */
 async function refresh() {
   try {
-    await loadTransactions();
+    await Promise.all([loadTransactions(), loadSummary()]);
   } catch (err) {
     showMessage(els["app-message"], err.message);
   }
+}
+
+/* ---------- Filters ---------- */
+function buildQuery() {
+  const params = new URLSearchParams();
+  const { start, end, category } = state.filters;
+  if (start) params.set("start", start);
+  if (end) params.set("end", end);
+  if (category) params.set("category", category);
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
+function applyFilters() {
+  state.filters = {
+    start: els["filter-start"].value || null,
+    end: els["filter-end"].value || null,
+    category: els["filter-category"].value.trim() || null,
+  };
+  refresh();
+}
+
+function clearFilters() {
+  els["filter-start"].value = "";
+  els["filter-end"].value = "";
+  els["filter-category"].value = "";
+  state.filters = {};
+  refresh();
+}
+
+/* ---------- Summary ---------- */
+async function loadSummary() {
+  const summary = await api(`/summary${buildQuery()}`);
+  renderSummary(summary);
+}
+
+function renderSummary(summary) {
+  els["summary-income"].textContent = formatMoney(summary.total_income);
+  els["summary-expenses"].textContent = formatMoney(summary.total_expenses);
+  els["summary-balance"].textContent = formatMoney(summary.balance);
 }
 
 /* ---------- Transactions: load & render ---------- */
@@ -122,7 +166,7 @@ function makeCell(text, className) {
 }
 
 async function loadTransactions() {
-  const transactions = await api("/transactions");
+  const transactions = await api(`/transactions${buildQuery()}`);
   state.transactions = transactions;
   renderTransactions(transactions);
 }
@@ -380,10 +424,22 @@ function wireAuth() {
 }
 
 /* ---------- Bootstrap ---------- */
+function wireFilters() {
+  els["apply-filters"].addEventListener("click", (e) => {
+    e.preventDefault();
+    applyFilters();
+  });
+  els["clear-filters"].addEventListener("click", (e) => {
+    e.preventDefault();
+    clearFilters();
+  });
+}
+
 function init() {
   cacheElements();
   wireAuth();
   wireTransactions();
+  wireFilters();
   checkSession();
 }
 
