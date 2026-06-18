@@ -20,8 +20,13 @@
     "test:coverage": "jest --coverage"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^25.9.3",
+    "@types/supertest": "^7.2.0",
     "esbuild": "^0.28.1",
+    "jest": "^30.4.2",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.11",
     "typescript": "^6.0.3"
   }
 }
