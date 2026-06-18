@@ -13,7 +13,7 @@
     "start": "node backend/dist/server.js",
     "dev": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --watch backend/src/server.ts",
     "dev:backend": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --watch backend/src/server.ts",
-    "dev:frontend": "esbuild frontend/src/main.ts --bundle --format=esm --outfile=frontend/public/dist/bundle.js --servedir=frontend/public --watch",
+    "dev:frontend": "esbuild frontend/src/main.ts --bundle --format=esm --outfile=frontend/public/dist/bundle.js --servedir=frontend/public --serve=8000 --watch=forever",
     "test": "jest",
     "test:backend": "jest backend",
     "test:frontend": "jest frontend",
