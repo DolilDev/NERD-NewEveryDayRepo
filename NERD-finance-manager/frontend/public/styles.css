@@ -289,6 +289,44 @@ button:hover {
   display: none !important;
 }
 
+/* Toast notifications */
+.toast {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 1000;
+}
+
+.toast__item {
+  min-width: 220px;
+  max-width: 360px;
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.toast__item--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast__item--success {
+  background: var(--income);
+}
+
+.toast__item--error {
+  background: var(--expense);
+}
+
 /* Responsive */
 @media (max-width: 760px) {
   .dashboard {

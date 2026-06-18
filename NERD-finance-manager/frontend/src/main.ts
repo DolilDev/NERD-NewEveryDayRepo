@@ -3,6 +3,7 @@
 // dashboard totals always match the list.
 
 import {
+  ApiRequestError,
   createRecord,
   deleteRecord,
   getRecords,
@@ -49,6 +50,35 @@ function today(): string {
 /** Show only the date portion (YYYY-MM-DD) of an ISO string. */
 function formatDate(value: string): string {
   return value.length >= 10 ? value.slice(0, 10) : value;
+}
+
+// --- Toast feedback -------------------------------------------------------
+
+type ToastVariant = 'success' | 'error';
+
+function showToast(message: string, variant: ToastVariant): void {
+  const container = document.getElementById('toast');
+  if (!container) {
+    return;
+  }
+  const toast = document.createElement('div');
+  toast.className = `toast__item toast__item--${variant}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  requestAnimationFrame(() => toast.classList.add('toast__item--visible'));
+  window.setTimeout(() => {
+    toast.classList.remove('toast__item--visible');
+    window.setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+/** Pull a user-friendly message out of any thrown value. */
+function getErrorMessage(error: unknown): string {
+  if (error instanceof ApiRequestError || error instanceof Error) {
+    return error.message;
+  }
+  return 'Something went wrong. Please try again.';
 }
 
 // --- Rendering ------------------------------------------------------------
@@ -222,6 +252,7 @@ async function handleSubmit(event: Event): Promise<void> {
   }
 
   const input = toRecordInput(values);
+  const successMessage = editingId ? 'Record updated.' : 'Record added.';
   try {
     if (editingId) {
       await updateRecord(editingId, input);
@@ -230,8 +261,11 @@ async function handleSubmit(event: Event): Promise<void> {
     }
     resetForm();
     await refresh();
+    showToast(successMessage, 'success');
   } catch (error) {
-    console.error(error);
+    const message = getErrorMessage(error);
+    setText('form-error', message);
+    showToast(message, 'error');
   }
 }
 
@@ -245,8 +279,9 @@ async function handleDelete(id: string): Promise<void> {
       resetForm();
     }
     await refresh();
+    showToast('Record deleted.', 'success');
   } catch (error) {
-    console.error(error);
+    showToast(getErrorMessage(error), 'error');
   }
 }
 
@@ -258,8 +293,9 @@ async function handleReset(): Promise<void> {
     await resetRecords();
     resetForm();
     await refresh();
+    showToast('All records cleared.', 'success');
   } catch (error) {
-    console.error(error);
+    showToast(getErrorMessage(error), 'error');
   }
 }
 
@@ -290,7 +326,7 @@ function init(): void {
     }
   });
 
-  void refresh().catch((error) => console.error(error));
+  void refresh().catch((error) => showToast(getErrorMessage(error), 'error'));
 }
 
 document.addEventListener('DOMContentLoaded', init);
