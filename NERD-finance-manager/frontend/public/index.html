@@ -42,6 +42,7 @@
                 <option value="expense">Expense</option>
                 <option value="income">Income</option>
               </select>
+              <small class="field-error" id="err-type"></small>
             </div>
 
             <div class="form-row">
@@ -54,11 +55,13 @@
                 min="0"
                 placeholder="0.00"
               />
+              <small class="field-error" id="err-amount"></small>
             </div>
 
             <div class="form-row">
               <label for="category">Category</label>
               <input type="text" id="category" name="category" placeholder="e.g. Groceries" />
+              <small class="field-error" id="err-category"></small>
             </div>
 
             <div class="form-row">
@@ -71,6 +74,7 @@
             <div class="form-row">
               <label for="date">Date</label>
               <input type="date" id="date" name="date" />
+              <small class="field-error" id="err-date"></small>
             </div>
 
             <p class="form-error" id="form-error" role="alert"></p>

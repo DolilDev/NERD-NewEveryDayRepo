@@ -10,6 +10,11 @@ import {
   updateRecord,
 } from './api.ts';
 import { computeTotals, formatCurrency } from './calc.ts';
+import {
+  validateRecordForm,
+  type FormValidationResult,
+  type RecordFormValues,
+} from './validation.ts';
 import type { FinanceRecord, NewRecordInput, RecordType } from '@shared';
 
 let records: FinanceRecord[] = [];
@@ -126,18 +131,48 @@ function render(): void {
 
 // --- Form state -----------------------------------------------------------
 
-function readForm(): NewRecordInput {
-  const input: NewRecordInput = {
-    type: getValue('type') as RecordType,
-    amount: Number(getValue('amount')),
-    category: getValue('category').trim(),
+function readFormValues(): RecordFormValues {
+  return {
+    type: getValue('type'),
+    amount: getValue('amount'),
+    category: getValue('category'),
+    description: getValue('description'),
     date: getValue('date'),
   };
-  const description = getValue('description').trim();
+}
+
+function toRecordInput(values: RecordFormValues): NewRecordInput {
+  const input: NewRecordInput = {
+    type: values.type as RecordType,
+    amount: Number(values.amount),
+    category: values.category.trim(),
+    date: values.date,
+  };
+  const description = values.description.trim();
   if (description) {
     input.description = description;
   }
   return input;
+}
+
+const VALIDATED_FIELDS: (keyof RecordFormValues)[] = ['type', 'amount', 'category', 'date'];
+
+function showFieldErrors(result: FormValidationResult): void {
+  for (const field of VALIDATED_FIELDS) {
+    const message = result.errors[field] ?? '';
+    const errorEl = document.getElementById(`err-${field}`);
+    if (errorEl) {
+      errorEl.textContent = message;
+    }
+    const fieldEl = document.getElementById(field);
+    if (fieldEl) {
+      fieldEl.classList.toggle('invalid', message !== '');
+    }
+  }
+}
+
+function clearFieldErrors(): void {
+  showFieldErrors({ valid: true, errors: {} });
 }
 
 function resetForm(): void {
@@ -148,6 +183,7 @@ function resetForm(): void {
   setText('form-title', 'Add a record');
   setText('submit-btn', 'Add record');
   setText('form-error', '');
+  clearFieldErrors();
   byId('cancel-btn').classList.add('hidden');
 }
 
@@ -177,7 +213,15 @@ async function refresh(): Promise<void> {
 
 async function handleSubmit(event: Event): Promise<void> {
   event.preventDefault();
-  const input = readForm();
+
+  const values = readFormValues();
+  const result = validateRecordForm(values);
+  showFieldErrors(result);
+  if (!result.valid) {
+    return;
+  }
+
+  const input = toRecordInput(values);
   try {
     if (editingId) {
       await updateRecord(editingId, input);

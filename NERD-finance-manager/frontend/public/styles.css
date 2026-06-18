@@ -163,6 +163,12 @@ body {
   margin: 0;
 }
 
+.field-error {
+  color: var(--expense);
+  font-size: 0.78rem;
+  min-height: 0.9rem;
+}
+
 .form-actions {
   display: flex;
   gap: 0.6rem;
