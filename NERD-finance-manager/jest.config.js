@@ -20,6 +20,7 @@ module.exports = {
     '!backend/src/server.ts',
     '!frontend/src/main.ts',
     '!frontend/src/api.ts',
+    '!frontend/src/chart.ts',
     '!**/*.d.ts',
   ],
 };
