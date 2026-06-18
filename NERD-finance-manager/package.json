@@ -4,5 +4,24 @@
   "private": true,
   "description": "Personal finance tracker — Express + TypeScript backend, vanilla TypeScript frontend, in-memory storage.",
   "license": "MIT",
-  "author": "DolilDev"
+  "author": "DolilDev",
+  "scripts": {
+    "typecheck": "tsc -p shared/tsconfig.json && tsc -p backend/tsconfig.json && tsc -p frontend/tsconfig.json",
+    "build": "npm run typecheck && npm run build:backend && npm run build:frontend",
+    "build:backend": "esbuild backend/src/server.ts --bundle --platform=node --format=cjs --target=node20 --packages=external --outfile=backend/dist/server.js",
+    "build:frontend": "esbuild frontend/src/main.ts --bundle --format=esm --target=es2020 --outfile=frontend/public/dist/bundle.js",
+    "start": "node backend/dist/server.js",
+    "dev": "node --watch backend/src/server.ts",
+    "dev:backend": "node --watch backend/src/server.ts",
+    "dev:frontend": "esbuild frontend/src/main.ts --bundle --format=esm --outfile=frontend/public/dist/bundle.js --servedir=frontend/public --watch",
+    "test": "jest",
+    "test:backend": "jest backend",
+    "test:frontend": "jest frontend",
+    "test:coverage": "jest --coverage"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "esbuild": "^0.28.1",
+    "typescript": "^6.0.3"
+  }
 }
