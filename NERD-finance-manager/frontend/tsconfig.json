@@ -3,6 +3,7 @@
   "compilerOptions": {
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["jest"],
+    "allowImportingTsExtensions": true,
     "paths": {
       "@shared": ["../shared/src/index.ts"],
       "@shared/*": ["../shared/src/*"]
