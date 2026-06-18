@@ -1,12 +1,13 @@
 // REST routes for finance records, wired to the in-memory store.
 //
-// Input validation and centralized error handling are layered on in a later
-// step; here we focus on mapping HTTP verbs to store operations and returning
-// 404 when an id does not exist.
+// Input is validated by the pure functions in ../validation. On bad input or a
+// missing id we throw an ApiError; Express 5 forwards synchronous throws to the
+// centralized error handler, which renders the `{ error }` JSON response.
 
 import { Router } from 'express';
 import { store } from '../store.ts';
-import type { NewRecordInput, UpdateRecordInput } from '@shared';
+import { validateNewRecord, validateUpdateRecord } from '../validation.ts';
+import { badRequest, notFound } from '../errors.ts';
 
 export const recordsRouter = Router();
 
@@ -26,24 +27,30 @@ recordsRouter.post('/reset', (_req, res) => {
 recordsRouter.get('/:id', (req, res) => {
   const record = store.getById(req.params.id);
   if (!record) {
-    res.status(404).json({ error: `No record found with id "${req.params.id}".` });
-    return;
+    throw notFound(`No record found with id "${req.params.id}".`);
   }
   res.json(record);
 });
 
 // POST /api/records — create a record.
 recordsRouter.post('/', (req, res) => {
-  const created = store.add(req.body as NewRecordInput);
+  const result = validateNewRecord(req.body);
+  if (!result.value) {
+    throw badRequest(result.errors.join(' '));
+  }
+  const created = store.add(result.value);
   res.status(201).json(created);
 });
 
 // PUT /api/records/:id — update a record.
 recordsRouter.put('/:id', (req, res) => {
-  const updated = store.update(req.params.id, req.body as UpdateRecordInput);
+  const result = validateUpdateRecord(req.body);
+  if (!result.value) {
+    throw badRequest(result.errors.join(' '));
+  }
+  const updated = store.update(req.params.id, result.value);
   if (!updated) {
-    res.status(404).json({ error: `No record found with id "${req.params.id}".` });
-    return;
+    throw notFound(`No record found with id "${req.params.id}".`);
   }
   res.json(updated);
 });
@@ -52,8 +59,7 @@ recordsRouter.put('/:id', (req, res) => {
 recordsRouter.delete('/:id', (req, res) => {
   const removed = store.delete(req.params.id);
   if (!removed) {
-    res.status(404).json({ error: `No record found with id "${req.params.id}".` });
-    return;
+    throw notFound(`No record found with id "${req.params.id}".`);
   }
   res.status(204).send();
 });

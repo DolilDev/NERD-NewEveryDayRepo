@@ -8,6 +8,7 @@ import path from 'node:path';
 import express, { type Express } from 'express';
 import cors from 'cors';
 import { recordsRouter } from './routes/records.ts';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler.ts';
 
 /** Directory holding the built frontend (index.html + bundle). */
 const FRONTEND_DIR = path.resolve(process.cwd(), 'frontend', 'public');
@@ -32,6 +33,11 @@ export function createApp(): Express {
   // Serve the built frontend so `npm start` serves the whole app on one origin.
   // (Populated by `npm run build:frontend`; harmless if not built yet.)
   app.use(express.static(FRONTEND_DIR));
+
+  // 404 for anything that matched no route or static file...
+  app.use(notFoundHandler);
+  // ...and the centralized error handler must come last.
+  app.use(errorHandler);
 
   return app;
 }
