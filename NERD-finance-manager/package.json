@@ -1,0 +1,8 @@
+{
+  "name": "nerd-finance-manager",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal finance tracker — Express + TypeScript backend, vanilla TypeScript frontend, in-memory storage.",
+  "license": "MIT",
+  "author": "DolilDev"
+}
