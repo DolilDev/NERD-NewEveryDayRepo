@@ -16,7 +16,10 @@ module.exports = {
     'backend/src/**/*.ts',
     'frontend/src/**/*.ts',
     'shared/src/**/*.ts',
+    // Entry points / IO glue are exercised via integration, not unit tests.
     '!backend/src/server.ts',
+    '!frontend/src/main.ts',
+    '!frontend/src/api.ts',
     '!**/*.d.ts',
   ],
 };
