@@ -91,6 +91,16 @@ body {
   border-color: var(--accent);
 }
 
+/* Chart */
+.chart-panel {
+  margin-bottom: 1.25rem;
+}
+
+.chart-wrapper {
+  position: relative;
+  height: 280px;
+}
+
 /* Two-column content */
 .content {
   display: grid;

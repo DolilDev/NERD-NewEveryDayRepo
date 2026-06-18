@@ -11,6 +11,7 @@ import {
   updateRecord,
 } from './api.ts';
 import { computeTotals, formatCurrency } from './calc.ts';
+import { renderChart } from './chart.ts';
 import {
   validateRecordForm,
   type FormValidationResult,
@@ -157,6 +158,7 @@ function renderRecords(): void {
 function render(): void {
   renderDashboard();
   renderRecords();
+  renderChart(byId('over-time-chart') as HTMLCanvasElement, records);
 }
 
 // --- Form state -----------------------------------------------------------
