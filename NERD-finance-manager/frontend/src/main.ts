@@ -1,19 +1,52 @@
-// Frontend entry point: fetch records and render the dashboard totals.
-// Record list rendering, the add/edit form, error handling and the chart are
-// layered on in later steps.
+// Frontend entry point: wires the dashboard, the records table and the
+// add/edit/delete form together. Every mutation re-fetches and re-renders so the
+// dashboard totals always match the list.
 
-import { getRecords } from './api.ts';
+import {
+  createRecord,
+  deleteRecord,
+  getRecords,
+  resetRecords,
+  updateRecord,
+} from './api.ts';
 import { computeTotals, formatCurrency } from './calc.ts';
-import type { FinanceRecord } from '@shared';
+import type { FinanceRecord, NewRecordInput, RecordType } from '@shared';
 
 let records: FinanceRecord[] = [];
+let editingId: string | null = null;
+
+// --- DOM helpers ----------------------------------------------------------
+
+function byId(id: string): HTMLElement {
+  const element = document.getElementById(id);
+  if (!element) {
+    throw new Error(`Missing required element #${id}`);
+  }
+  return element;
+}
+
+function getValue(id: string): string {
+  return (byId(id) as HTMLInputElement | HTMLSelectElement).value;
+}
+
+function setValue(id: string, value: string): void {
+  (byId(id) as HTMLInputElement | HTMLSelectElement).value = value;
+}
 
 function setText(id: string, text: string): void {
-  const element = document.getElementById(id);
-  if (element) {
-    element.textContent = text;
-  }
+  byId(id).textContent = text;
 }
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** Show only the date portion (YYYY-MM-DD) of an ISO string. */
+function formatDate(value: string): string {
+  return value.length >= 10 ? value.slice(0, 10) : value;
+}
+
+// --- Rendering ------------------------------------------------------------
 
 function renderDashboard(): void {
   const totals = computeTotals(records);
@@ -22,17 +55,198 @@ function renderDashboard(): void {
   setText('balance', formatCurrency(totals.balance));
 }
 
-async function refresh(): Promise<void> {
-  records = await getRecords();
-  renderDashboard();
+function makeButton(
+  label: string,
+  action: 'edit' | 'delete',
+  id: string,
+  className: string,
+): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = label;
+  button.className = className;
+  button.dataset.action = action;
+  button.dataset.id = id;
+  return button;
 }
 
-function init(): void {
+function renderRecords(): void {
+  const tbody = byId('records-body');
+  const emptyState = byId('empty-state');
+  tbody.replaceChildren();
+
+  if (records.length === 0) {
+    emptyState.classList.remove('hidden');
+    return;
+  }
+  emptyState.classList.add('hidden');
+
+  // Most recent first.
+  const sorted = [...records].sort((a, b) => b.date.localeCompare(a.date));
+
+  for (const record of sorted) {
+    const row = document.createElement('tr');
+
+    const typeCell = document.createElement('td');
+    const badge = document.createElement('span');
+    badge.className = `type-badge type-badge--${record.type}`;
+    badge.textContent = record.type === 'income' ? 'Income' : 'Expense';
+    typeCell.appendChild(badge);
+
+    const amountCell = document.createElement('td');
+    amountCell.className = `amount-${record.type}`;
+    const sign = record.type === 'expense' ? '−' : '+';
+    amountCell.textContent = `${sign}${formatCurrency(record.amount)}`;
+
+    const categoryCell = document.createElement('td');
+    categoryCell.textContent = record.category;
+
+    const descriptionCell = document.createElement('td');
+    descriptionCell.textContent = record.description ?? '';
+
+    const dateCell = document.createElement('td');
+    dateCell.textContent = formatDate(record.date);
+
+    const actionsCell = document.createElement('td');
+    const actions = document.createElement('div');
+    actions.className = 'row-actions';
+    actions.appendChild(makeButton('Edit', 'edit', record.id, 'btn-secondary'));
+    actions.appendChild(makeButton('Delete', 'delete', record.id, 'btn-danger'));
+    actionsCell.appendChild(actions);
+
+    row.append(typeCell, amountCell, categoryCell, descriptionCell, dateCell, actionsCell);
+    tbody.appendChild(row);
+  }
+}
+
+function render(): void {
   renderDashboard();
-  void refresh().catch((error) => {
-    // Proper user-facing error handling is added in a later step.
+  renderRecords();
+}
+
+// --- Form state -----------------------------------------------------------
+
+function readForm(): NewRecordInput {
+  const input: NewRecordInput = {
+    type: getValue('type') as RecordType,
+    amount: Number(getValue('amount')),
+    category: getValue('category').trim(),
+    date: getValue('date'),
+  };
+  const description = getValue('description').trim();
+  if (description) {
+    input.description = description;
+  }
+  return input;
+}
+
+function resetForm(): void {
+  editingId = null;
+  (byId('record-form') as HTMLFormElement).reset();
+  setValue('record-id', '');
+  setValue('date', today());
+  setText('form-title', 'Add a record');
+  setText('submit-btn', 'Add record');
+  setText('form-error', '');
+  byId('cancel-btn').classList.add('hidden');
+}
+
+function startEdit(id: string): void {
+  const record = records.find((entry) => entry.id === id);
+  if (!record) {
+    return;
+  }
+  editingId = id;
+  setValue('type', record.type);
+  setValue('amount', String(record.amount));
+  setValue('category', record.category);
+  setValue('description', record.description ?? '');
+  setValue('date', formatDate(record.date));
+  setText('form-title', 'Edit record');
+  setText('submit-btn', 'Save changes');
+  byId('cancel-btn').classList.remove('hidden');
+  byId('amount').focus();
+}
+
+// --- Actions --------------------------------------------------------------
+
+async function refresh(): Promise<void> {
+  records = await getRecords();
+  render();
+}
+
+async function handleSubmit(event: Event): Promise<void> {
+  event.preventDefault();
+  const input = readForm();
+  try {
+    if (editingId) {
+      await updateRecord(editingId, input);
+    } else {
+      await createRecord(input);
+    }
+    resetForm();
+    await refresh();
+  } catch (error) {
     console.error(error);
+  }
+}
+
+async function handleDelete(id: string): Promise<void> {
+  if (!window.confirm('Delete this record?')) {
+    return;
+  }
+  try {
+    await deleteRecord(id);
+    if (editingId === id) {
+      resetForm();
+    }
+    await refresh();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function handleReset(): Promise<void> {
+  if (!window.confirm('Delete ALL records? This cannot be undone.')) {
+    return;
+  }
+  try {
+    await resetRecords();
+    resetForm();
+    await refresh();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// --- Wiring ---------------------------------------------------------------
+
+function init(): void {
+  setValue('date', today());
+  render();
+
+  (byId('record-form') as HTMLFormElement).addEventListener('submit', (event) => {
+    void handleSubmit(event);
   });
+  byId('cancel-btn').addEventListener('click', resetForm);
+  byId('reset-btn').addEventListener('click', () => void handleReset());
+  byId('records-body').addEventListener('click', (event) => {
+    const button = (event.target as HTMLElement).closest('button');
+    if (!(button instanceof HTMLButtonElement)) {
+      return;
+    }
+    const { action, id } = button.dataset;
+    if (!id) {
+      return;
+    }
+    if (action === 'edit') {
+      startEdit(id);
+    } else if (action === 'delete') {
+      void handleDelete(id);
+    }
+  });
+
+  void refresh().catch((error) => console.error(error));
 }
 
 document.addEventListener('DOMContentLoaded', init);
