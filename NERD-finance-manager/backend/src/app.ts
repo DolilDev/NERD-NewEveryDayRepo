@@ -7,6 +7,7 @@
 import path from 'node:path';
 import express, { type Express } from 'express';
 import cors from 'cors';
+import { recordsRouter } from './routes/records.ts';
 
 /** Directory holding the built frontend (index.html + bundle). */
 const FRONTEND_DIR = path.resolve(process.cwd(), 'frontend', 'public');
@@ -24,6 +25,9 @@ export function createApp(): Express {
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', uptime: process.uptime() });
   });
+
+  // Records REST API.
+  app.use('/api/records', recordsRouter);
 
   // Serve the built frontend so `npm start` serves the whole app on one origin.
   // (Populated by `npm run build:frontend`; harmless if not built yet.)
