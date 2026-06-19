@@ -17,5 +17,8 @@
     "nodemailer"
   ],
   "author": "DolilDev",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
 }
