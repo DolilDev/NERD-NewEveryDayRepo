@@ -1,5 +1,6 @@
 const express = require('express');
 const healthRoutes = require('./routes/healthRoutes');
+const eventRoutes = require('./routes/eventRoutes');
 
 /**
  * Build and configure the Express application.
@@ -11,6 +12,7 @@ function createApp() {
   app.use(express.json());
 
   app.use('/health', healthRoutes);
+  app.use('/events', eventRoutes);
 
   return app;
 }
