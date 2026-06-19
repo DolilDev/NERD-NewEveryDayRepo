@@ -6,7 +6,7 @@ A collection of daily quests from the NERD app — one quest per day, each in it
 
 | Status | Quest | Description | Stack | Folder |
 | :----: | ----- | ----------- | ----- | ------ |
-| ⏳ | Event Scheduler API with Notification System | 1. **Set Up the Project**: Initialize a Node. js project and install Express. Create a basic server setup with endpoints for adding, retrieving, updating, and deleting events. | — | [NERD-event-scheduler-api](./NERD-event-scheduler-api) |
+| ✅ | Event Scheduler API with Notification System | 1. **Set Up the Project**: Initialize a Node. js project and install Express. Create a basic server setup with endpoints for adding, retrieving, updating, and deleting events. | Express, Node.js, JavaScript | [NERD-event-scheduler-api](./NERD-event-scheduler-api) |
 | ✅ | Personal Finance Tracker Web App | Build a personal finance tracker web application that allows users to manage their expenses and incomes. | Express, Node.js, TypeScript, HTML, CSS | [NERD-finance-manager](./NERD-finance-manager) |
 | ✅ | Personal Finance Tracker | Build a Personal Finance Tracker that consists of a frontend and a backend. Structure it into the following modules: 1. | Python, JavaScript, HTML | [NERD-finance-tracker](./NERD-finance-tracker) |
 | ✅ | Zarządzanie zadaniami w trybie offline z synchronizacją z chmurą | Zbuduj aplikację desktopową do zarządzania zadaniami, która będzie działać offline i synchronizować dane z lokalną bazą SQLite. | Electron, Node.js, TypeScript, JavaScript, HTML | [NERD-offline-task-manager](./NERD-offline-task-manager) |
