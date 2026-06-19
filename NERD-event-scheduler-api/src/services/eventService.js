@@ -8,4 +8,12 @@ function createEvent(data) {
   return store.create(data);
 }
 
-module.exports = { createEvent };
+function getAllEvents() {
+  return store.findAll();
+}
+
+function getEventById(id) {
+  return store.findById(id);
+}
+
+module.exports = { createEvent, getAllEvents, getEventById };

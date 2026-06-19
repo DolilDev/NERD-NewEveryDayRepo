@@ -13,4 +13,20 @@ function create(req, res) {
   return res.status(201).json(event);
 }
 
-module.exports = { create };
+// GET /events - list all events
+function list(req, res) {
+  return res.json(eventService.getAllEvents());
+}
+
+// GET /events/:id - fetch a single event
+function getOne(req, res) {
+  const event = eventService.getEventById(req.params.id);
+  if (!event) {
+    return res.status(404).json({
+      error: { message: `Event with id '${req.params.id}' not found` },
+    });
+  }
+  return res.json(event);
+}
+
+module.exports = { create, list, getOne };
