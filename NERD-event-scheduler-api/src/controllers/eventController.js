@@ -29,4 +29,21 @@ function getOne(req, res) {
   return res.json(event);
 }
 
-module.exports = { create, list, getOne };
+// PUT /events/:id - replace an existing event
+function update(req, res) {
+  const errors = validateEventInput(req.body);
+  if (errors.length > 0) {
+    return res
+      .status(400)
+      .json({ error: { message: 'Validation failed', details: errors } });
+  }
+  const event = eventService.updateEvent(req.params.id, req.body);
+  if (!event) {
+    return res.status(404).json({
+      error: { message: `Event with id '${req.params.id}' not found` },
+    });
+  }
+  return res.json(event);
+}
+
+module.exports = { create, list, getOne, update };

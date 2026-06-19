@@ -16,4 +16,8 @@ function getEventById(id) {
   return store.findById(id);
 }
 
-module.exports = { createEvent, getAllEvents, getEventById };
+function updateEvent(id, data) {
+  return store.update(id, data);
+}
+
+module.exports = { createEvent, getAllEvents, getEventById, updateEvent };
