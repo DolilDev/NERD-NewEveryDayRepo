@@ -23,11 +23,20 @@ function getEventById(id) {
 }
 
 function updateEvent(id, data) {
-  return store.update(id, data);
+  const event = store.update(id, data);
+  if (event) {
+    // Replace any pending notification with one for the updated event.
+    notifications.reschedule(event);
+  }
+  return event;
 }
 
 function deleteEvent(id) {
-  return store.remove(id);
+  const deleted = store.remove(id);
+  if (deleted) {
+    notifications.cancel(id);
+  }
+  return deleted;
 }
 
 module.exports = {
