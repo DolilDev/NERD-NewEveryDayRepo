@@ -1,6 +1,7 @@
 const express = require('express');
 const healthRoutes = require('./routes/healthRoutes');
 const eventRoutes = require('./routes/eventRoutes');
+const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
 /**
  * Build and configure the Express application.
@@ -13,6 +14,10 @@ function createApp() {
 
   app.use('/health', healthRoutes);
   app.use('/events', eventRoutes);
+
+  // 404 for unmatched routes, then the centralized error handler (must be last).
+  app.use(notFoundHandler);
+  app.use(errorHandler);
 
   return app;
 }
