@@ -1,4 +1,5 @@
 const express = require('express');
+const rootRoutes = require('./routes/rootRoutes');
 const healthRoutes = require('./routes/healthRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
@@ -12,6 +13,7 @@ function createApp() {
 
   app.use(express.json());
 
+  app.use('/', rootRoutes);
   app.use('/health', healthRoutes);
   app.use('/events', eventRoutes);
 

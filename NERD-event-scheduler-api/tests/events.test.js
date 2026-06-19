@@ -111,4 +111,13 @@ describe('Events CRUD API', () => {
       expect(res.body.status).toBe('ok');
     });
   });
+
+  describe('GET /', () => {
+    it('returns an API index instead of a 404', async () => {
+      const res = await request(app).get('/');
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('ok');
+      expect(res.body.endpoints).toHaveProperty('createEvent', 'POST /events');
+    });
+  });
 });
