@@ -46,4 +46,15 @@ function update(req, res) {
   return res.json(event);
 }
 
-module.exports = { create, list, getOne, update };
+// DELETE /events/:id - remove an event
+function remove(req, res) {
+  const deleted = eventService.deleteEvent(req.params.id);
+  if (!deleted) {
+    return res.status(404).json({
+      error: { message: `Event with id '${req.params.id}' not found` },
+    });
+  }
+  return res.status(204).send();
+}
+
+module.exports = { create, list, getOne, update, remove };

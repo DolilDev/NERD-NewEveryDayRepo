@@ -20,4 +20,14 @@ function updateEvent(id, data) {
   return store.update(id, data);
 }
 
-module.exports = { createEvent, getAllEvents, getEventById, updateEvent };
+function deleteEvent(id) {
+  return store.remove(id);
+}
+
+module.exports = {
+  createEvent,
+  getAllEvents,
+  getEventById,
+  updateEvent,
+  deleteEvent,
+};
