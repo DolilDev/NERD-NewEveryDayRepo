@@ -1,0 +1,24 @@
+{
+  "name": "nerd-realtime-markdown-editor-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vanilla TypeScript client for the real-time collaborative Markdown editor.",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
+  },
+  "dependencies": {
+    "highlight.js": "^11.11.1",
+    "marked": "^4.3.0",
+    "socket.io-client": "^4.8.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.0.0",
+    "esbuild": "^0.28.1",
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.11",
+    "typescript": "^6.0.3"
+  }
+}
