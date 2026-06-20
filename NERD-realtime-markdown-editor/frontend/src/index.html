@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Collaborative Markdown Editor</title>
+    <link rel="stylesheet" href="./hljs.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1 class="app-header__title">Collaborative Markdown</h1>
+      <div class="app-header__meta">
+        <ul id="collaborators" class="collaborators" aria-label="Collaborators"></ul>
+        <span id="status" class="status status--offline" role="status">Offline</span>
+      </div>
+    </header>
+
+    <main class="editor">
+      <section class="pane pane--input">
+        <label class="pane__label" for="markdown-input">Markdown</label>
+        <textarea
+          id="markdown-input"
+          class="pane__textarea"
+          spellcheck="false"
+          autocomplete="off"
+          placeholder="# Start typing Markdown…"
+        ></textarea>
+      </section>
+
+      <section class="pane pane--preview">
+        <span class="pane__label">Preview</span>
+        <div id="preview" class="pane__preview markdown-body" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <script src="./bundle.js" defer></script>
+  </body>
+</html>
