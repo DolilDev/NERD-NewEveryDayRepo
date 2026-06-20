@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import socketio
 
-from .session import SessionManager
+from .session import RemovedUser, SessionManager
 
 DEFAULT_NAME = "Anonymous"
 
@@ -67,9 +67,18 @@ async def handle_doc_update(
 
 async def handle_disconnect(
     sio: socketio.AsyncServer, session: SessionManager, sid: str
-) -> None:
-    """Remove the connection from its room (room content is preserved)."""
-    session.remove_user(sid)
+) -> RemovedUser | None:
+    """Remove the connection from its room without discarding the document.
+
+    The room's content is preserved so a reconnecting client receives the
+    latest content on its next ``join``. Empty *non-default* rooms are then
+    reclaimed safely — the default (shared) room is always kept, so its
+    content survives even when nobody is connected. Returns the removed user.
+    """
+    removed = session.remove_user(sid)
+    # Free memory for abandoned ad-hoc rooms; never touches the default room.
+    session.prune_empty_rooms()
+    return removed
 
 
 def register_handlers(sio: socketio.AsyncServer, session: SessionManager) -> None:
