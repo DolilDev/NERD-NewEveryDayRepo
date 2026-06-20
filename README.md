@@ -6,6 +6,7 @@ A collection of daily quests from the NERD app — one quest per day, each in it
 
 | Status | Quest | Description | Stack | Folder |
 | :----: | ----- | ----------- | ----- | ------ |
+| ⏳ | Real-Time Collaborative Markdown Editor | Build a real-time collaborative Markdown editor using TypeScript for the frontend and Python for a lightweight backend. | — | [NERD-realtime-markdown-editor](./NERD-realtime-markdown-editor) |
 | ✅ | Event Scheduler API with Notification System | 1. **Set Up the Project**: Initialize a Node. js project and install Express. Create a basic server setup with endpoints for adding, retrieving, updating, and deleting events. | Express, Node.js, JavaScript | [NERD-event-scheduler-api](./NERD-event-scheduler-api) |
 | ✅ | Personal Finance Tracker Web App | Build a personal finance tracker web application that allows users to manage their expenses and incomes. | Express, Node.js, TypeScript, HTML, CSS | [NERD-finance-manager](./NERD-finance-manager) |
 | ✅ | Personal Finance Tracker | Build a Personal Finance Tracker that consists of a frontend and a backend. Structure it into the following modules: 1. | Python, JavaScript, HTML | [NERD-finance-tracker](./NERD-finance-tracker) |
