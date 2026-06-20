@@ -1,12 +1,14 @@
 // Client entry point: renders Markdown locally and keeps the document in sync
 // with other clients over Socket.IO using a cursor-safe, typing-locked strategy,
-// with explicit connection-loss feedback and offline editing.
+// with connection-loss feedback, offline editing and localStorage persistence.
 import { io } from "socket.io-client";
 
 import { renderMarkdown } from "./markdown";
+import { loadDocument, saveDocument } from "./storage";
 import { applyRemote, debounce, RemoteBuffer } from "./sync";
 
 const ROOM = "main";
+const STORAGE_KEY = `nerd-md:${ROOM}`;
 const DEBOUNCE_MS = 150; // throttle outgoing edits
 const TYPING_LOCK_MS = 400; // hold remote updates while actively typing
 
@@ -16,6 +18,17 @@ const statusEl = document.getElementById("status") as HTMLElement;
 
 function updatePreview(): void {
   preview.innerHTML = renderMarkdown(textarea.value);
+}
+
+/** Persist the current document locally (best-effort). */
+function persist(): void {
+  saveDocument(STORAGE_KEY, textarea.value);
+}
+
+// Restore any locally-persisted document before connecting.
+const restored = loadDocument(STORAGE_KEY);
+if (restored !== null) {
+  textarea.value = restored;
 }
 
 // --- connection status banner --------------------------------------------
@@ -44,6 +57,7 @@ function applyRemoteContent(content: string): void {
   textarea.value = next.value;
   textarea.setSelectionRange(next.selStart, next.selEnd);
   updatePreview();
+  persist();
 }
 
 const remoteBuffer = new RemoteBuffer({
@@ -53,6 +67,8 @@ const remoteBuffer = new RemoteBuffer({
 
 // Track edits made while disconnected so we can flush them once back online.
 let editedWhileOffline = false;
+// The first server snapshot after load is reconciled against restored content.
+let initialSyncPending = true;
 
 const emitUpdate = debounce((content: string) => {
   if (socket.connected) {
@@ -65,6 +81,7 @@ const emitUpdate = debounce((content: string) => {
 
 textarea.addEventListener("input", () => {
   updatePreview();
+  persist();
   remoteBuffer.keystroke(); // engage typing lock
   emitUpdate(textarea.value); // debounced broadcast (or queue while offline)
 });
@@ -78,6 +95,22 @@ socket.on("connect", () => {
 socket.on("doc:sync", (data: { content?: string }) => {
   if (typeof data?.content !== "string") return;
   const server = data.content;
+
+  if (initialSyncPending) {
+    // First snapshot after load: reconcile restored content with the server.
+    initialSyncPending = false;
+    editedWhileOffline = false;
+    if (server.length > 0) {
+      // Server holds the shared document -> adopt it (cursor-safe).
+      remoteBuffer.receive(server);
+    } else if (textarea.value.length > 0) {
+      // Fresh server, but we restored a local doc -> repopulate the server.
+      socket.emit("doc:update", { room: ROOM, content: textarea.value });
+      persist();
+    }
+    return;
+  }
+
   if (editedWhileOffline && server !== textarea.value) {
     // We edited while offline; our content is newer (last-write-wins). Push it
     // so the server catches up, and keep the local text on screen.
@@ -102,5 +135,5 @@ socket.io.on("reconnect_failed", () => {
   setStatus("offline");
 });
 
-// Initial paint (handles any pre-filled content).
+// Initial paint (handles restored / pre-filled content).
 updatePreview();
