@@ -4,15 +4,20 @@ Run locally with::
 
     uvicorn app.main:app --reload
 
-The app serves the built TypeScript client (``frontend/dist``) and exposes a
-``/health`` route. The Socket.IO realtime layer is mounted in a later step.
+``app`` is a Socket.IO ASGI application that handles ``/socket.io`` traffic and
+delegates everything else to a FastAPI app which serves the built TypeScript
+client (``frontend/dist``) and a ``/health`` route.
 """
 
 from pathlib import Path
 
+import socketio
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+
+from .session import SessionManager
+from .sockets import register_handlers
 
 # backend/app/main.py -> backend/app -> backend -> project root
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -32,10 +37,10 @@ _FALLBACK_HTML = """<!doctype html>
 </html>
 """
 
-app = FastAPI(title="Real-Time Collaborative Markdown Editor")
+fastapi_app = FastAPI(title="Real-Time Collaborative Markdown Editor")
 
 
-@app.get("/health")
+@fastapi_app.get("/health")
 async def health() -> dict:
     """Liveness probe used by tooling and tests."""
     return {"status": "ok"}
@@ -44,10 +49,21 @@ async def health() -> dict:
 if INDEX_FILE.is_file():
     # Serve the built client at the root; assets (bundle.js, styles.css, ...)
     # are referenced relatively from index.html and resolved by this mount.
-    app.mount("/", StaticFiles(directory=str(FRONTEND_DIST), html=True), name="static")
+    fastapi_app.mount(
+        "/", StaticFiles(directory=str(FRONTEND_DIST), html=True), name="static"
+    )
 else:
 
-    @app.get("/", response_class=HTMLResponse)
+    @fastapi_app.get("/", response_class=HTMLResponse)
     async def index_fallback() -> str:
         """Placeholder served until the frontend bundle exists."""
         return _FALLBACK_HTML
+
+
+# --- realtime layer -------------------------------------------------------
+sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
+session = SessionManager()
+register_handlers(sio, session)
+
+# Combined ASGI app: Socket.IO on /socket.io, FastAPI for everything else.
+app = socketio.ASGIApp(sio, other_asgi_app=fastapi_app)
