@@ -46,6 +46,25 @@ async def handle_join(
     await sio.emit("doc:sync", {"content": session.get_content(room)}, to=sid)
 
 
+async def handle_doc_update(
+    sio: socketio.AsyncServer, session: SessionManager, sid: str, data: object
+) -> None:
+    """Store an incoming edit and broadcast it to the room's other clients.
+
+    Last-write-wins: the room content is overwritten with ``content``. The
+    update is broadcast as ``doc:sync`` to everyone in the room except the
+    sender. Malformed payloads (missing/non-string content) are ignored.
+    """
+    payload = data if isinstance(data, dict) else {}
+    content = payload.get("content")
+    if not isinstance(content, str):
+        return  # ignore malformed input
+
+    room = payload.get("room") or session.room_of(sid) or session.default_room
+    session.set_content(room, content)
+    await sio.emit("doc:sync", {"content": content}, room=room, skip_sid=sid)
+
+
 async def handle_disconnect(
     sio: socketio.AsyncServer, session: SessionManager, sid: str
 ) -> None:
@@ -68,3 +87,7 @@ def register_handlers(sio: socketio.AsyncServer, session: SessionManager) -> Non
     @sio.on("join")
     async def join(sid: str, data: object) -> None:
         await handle_join(sio, session, sid, data)
+
+    @sio.on("doc:update")
+    async def doc_update(sid: str, data: object) -> None:
+        await handle_doc_update(sio, session, sid, data)
