@@ -44,6 +44,8 @@ async def handle_join(
 
     # The newly joined (or reconnecting) client receives the latest content.
     await sio.emit("doc:sync", {"content": session.get_content(room)}, to=sid)
+    # Everyone in the room (including the newcomer) gets the updated roster.
+    await sio.emit("users", {"users": session.get_users(room)}, room=room)
 
 
 async def handle_doc_update(
@@ -78,6 +80,11 @@ async def handle_disconnect(
     removed = session.remove_user(sid)
     # Free memory for abandoned ad-hoc rooms; never touches the default room.
     session.prune_empty_rooms()
+    if removed is not None:
+        # Tell the room's remaining members about the updated roster.
+        await sio.emit(
+            "users", {"users": session.get_users(removed.room)}, room=removed.room
+        )
     return removed
 
 

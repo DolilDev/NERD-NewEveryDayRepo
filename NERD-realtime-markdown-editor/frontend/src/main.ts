@@ -9,16 +9,44 @@ import { applyRemote, debounce, RemoteBuffer } from "./sync";
 
 const ROOM = "main";
 const STORAGE_KEY = `nerd-md:${ROOM}`;
+const USERNAME_KEY = "nerd-md:username";
 const DEBOUNCE_MS = 150; // throttle outgoing edits
 const TYPING_LOCK_MS = 400; // hold remote updates while actively typing
 
 const textarea = document.getElementById("markdown-input") as HTMLTextAreaElement;
 const preview = document.getElementById("preview") as HTMLElement;
 const statusEl = document.getElementById("status") as HTMLElement;
+const collaboratorsEl = document.getElementById("collaborators") as HTMLElement;
 
 function updatePreview(): void {
   preview.innerHTML = renderMarkdown(textarea.value);
 }
+
+/** Resolve (and remember) a display name, prompting once if needed. */
+function resolveUsername(): string {
+  const saved = loadDocument(USERNAME_KEY);
+  if (saved !== null && saved.trim() !== "") return saved;
+  const entered =
+    typeof window !== "undefined" && typeof window.prompt === "function"
+      ? window.prompt("Choose a display name", "")
+      : null;
+  const name = (entered ?? "").trim() || "Anonymous";
+  saveDocument(USERNAME_KEY, name);
+  return name;
+}
+
+/** Render the active collaborator roster (textContent — no HTML injection). */
+function renderCollaborators(names: string[]): void {
+  collaboratorsEl.innerHTML = "";
+  for (const name of names) {
+    const item = document.createElement("li");
+    item.className = "collaborators__item";
+    item.textContent = name;
+    collaboratorsEl.appendChild(item);
+  }
+}
+
+const username = resolveUsername();
 
 /** Persist the current document locally (best-effort). */
 function persist(): void {
@@ -89,7 +117,11 @@ textarea.addEventListener("input", () => {
 // --- connection lifecycle -------------------------------------------------
 socket.on("connect", () => {
   setStatus("connected");
-  socket.emit("join", { room: ROOM }); // (re)join after connect or reconnect
+  socket.emit("join", { room: ROOM, name: username }); // (re)join with identity
+});
+
+socket.on("users", (data: { users?: string[] }) => {
+  if (Array.isArray(data?.users)) renderCollaborators(data.users);
 });
 
 socket.on("doc:sync", (data: { content?: string }) => {

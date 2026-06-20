@@ -33,7 +33,30 @@ async def test_join_adds_user_and_sends_current_content():
 
     assert session.get_users("main") == ["Ada"]
     sio.enter_room.assert_awaited_once_with("sidA", "main")
-    sio.emit.assert_awaited_once_with("doc:sync", {"content": "# Existing"}, to="sidA")
+    sio.emit.assert_any_await("doc:sync", {"content": "# Existing"}, to="sidA")
+    sio.emit.assert_any_await("users", {"users": ["Ada"]}, room="main")
+
+
+async def test_join_broadcasts_updated_roster():
+    sio = make_server()
+    session = SessionManager()
+
+    await handle_join(sio, session, "s1", {"room": "main", "name": "Ada"})
+    await handle_join(sio, session, "s2", {"room": "main", "name": "Lin"})
+
+    sio.emit.assert_any_await("users", {"users": ["Ada", "Lin"]}, room="main")
+
+
+async def test_disconnect_broadcasts_updated_roster():
+    sio = make_server()
+    session = SessionManager()
+    await handle_join(sio, session, "s1", {"room": "main", "name": "Ada"})
+    await handle_join(sio, session, "s2", {"room": "main", "name": "Lin"})
+    sio.reset_mock()
+
+    await handle_disconnect(sio, session, "s1")
+
+    sio.emit.assert_any_await("users", {"users": ["Lin"]}, room="main")
 
 
 async def test_join_defaults_room_and_name():
@@ -124,7 +147,7 @@ async def test_update_then_reconnect_receives_latest_content():
     sio.reset_mock()
     await handle_join(sio, session, "new", {"room": "main", "name": "Ada"})
 
-    sio.emit.assert_awaited_once_with("doc:sync", {"content": "v2"}, to="new")
+    sio.emit.assert_any_await("doc:sync", {"content": "v2"}, to="new")
 
 
 def test_register_handlers_binds_events():
