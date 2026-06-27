@@ -388,7 +388,7 @@ describe('Personal Finance Tracker API', () => {
         .set('Authorization', `Bearer ${testToken}`);
 
       expect(response.status).toBe(404);
-      expect(response.body.error).toContain('not found');
+      expect(response.body.error).toContain('Not found');
     });
 
     it('should reject get request without authentication', async () => {
