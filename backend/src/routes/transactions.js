@@ -82,4 +82,92 @@ router.post('/', (req, res, next) => {
   }
 });
 
+// GET single transaction by id
+router.get('/:id', (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const transaction = store.getTransactionById(id);
+    if (!transaction) {
+      throw new NotFoundError('Transaction not found');
+    }
+
+    if (transaction.userId !== req.user.id) {
+      throw new ValidationError('Unauthorized: transaction does not belong to this user');
+    }
+
+    res.status(200).json(transaction);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PUT update a transaction
+router.put('/:id', (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { type, amount, category, description, date } = req.body;
+
+    const transaction = store.getTransactionById(id);
+    if (!transaction) {
+      throw new NotFoundError('Transaction not found');
+    }
+
+    if (transaction.userId !== req.user.id) {
+      throw new ValidationError('Unauthorized: transaction does not belong to this user');
+    }
+
+    // Validation for updates
+    if (type !== undefined && !['income', 'expense'].includes(type)) {
+      throw new ValidationError('Type must be either "income" or "expense"');
+    }
+
+    if (amount !== undefined && (typeof amount !== 'number' || amount <= 0)) {
+      throw new ValidationError('Amount must be a positive number');
+    }
+
+    if (category !== undefined && (typeof category !== 'string' || category.trim().length === 0)) {
+      throw new ValidationError('Category must be a non-empty string');
+    }
+
+    if (description !== undefined && typeof description !== 'string') {
+      throw new ValidationError('Description must be a string');
+    }
+
+    // Build update object
+    const updates = {};
+    if (type !== undefined) updates.type = type;
+    if (amount !== undefined) updates.amount = amount;
+    if (category !== undefined) updates.category = category;
+    if (description !== undefined) updates.description = description;
+    if (date !== undefined) updates.date = date;
+
+    const updatedTransaction = store.updateTransaction(id, updates);
+    res.status(200).json(updatedTransaction);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE a transaction
+router.delete('/:id', (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const transaction = store.getTransactionById(id);
+    if (!transaction) {
+      throw new NotFoundError('Transaction not found');
+    }
+
+    if (transaction.userId !== req.user.id) {
+      throw new ValidationError('Unauthorized: transaction does not belong to this user');
+    }
+
+    store.deleteTransaction(id);
+    res.status(200).json({ message: 'Transaction deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;
