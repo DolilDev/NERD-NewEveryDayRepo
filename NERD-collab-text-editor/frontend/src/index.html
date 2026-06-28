@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NERD Collab Login</title>
+    <link rel="stylesheet" href="./styles/main.scss" />
+  </head>
+  <body>
+    <main class="auth-page">
+      <section class="auth-card">
+        <div class="tabs">
+          <button id="loginTab" class="tab active">Login</button>
+          <button id="registerTab" class="tab">Register</button>
+        </div>
+        <form id="authForm" class="auth-form">
+          <h1 id="formTitle">Login</h1>
+          <label>
+            Username
+            <input type="text" id="username" autocomplete="username" />
+          </label>
+          <label>
+            Password
+            <input type="password" id="password" autocomplete="current-password" />
+          </label>
+          <button type="submit" id="submitButton">Continue</button>
+        </form>
+        <div id="toast" class="toast hidden"></div>
+      </section>
+    </main>
+    <script type="module" src="./ts/auth.ts"></script>
+  </body>
+</html>

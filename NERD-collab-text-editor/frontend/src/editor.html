@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NERD Collaborative Editor</title>
+    <link rel="stylesheet" href="./styles/main.scss" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="toolbar">
+          <button id="createDocButton">New Document</button>
+          <button id="toggleHistoryButton">History</button>
+        </div>
+        <section class="document-list" id="documentList"></section>
+        <section class="collaborators-panel">
+          <h2>Collaborators</h2>
+          <ul id="collaboratorList"></ul>
+        </section>
+      </aside>
+      <main class="editor-main">
+        <header class="editor-header">
+          <input id="docTitle" class="doc-title" placeholder="Select or create a document" readonly />
+          <button id="saveSnapshotButton">Save Snapshot</button>
+        </header>
+        <div class="editor-grid">
+          <div id="editor" class="editor" contenteditable="true"></div>
+          <aside class="history-panel hidden" id="historyPanel">
+            <h2>Snapshot History</h2>
+            <ul id="snapshotList"></ul>
+          </aside>
+        </div>
+      </main>
+    </div>
+    <div id="notification" class="notification hidden"></div>
+    <script type="module" src="./ts/editor.ts"></script>
+  </body>
+</html>
