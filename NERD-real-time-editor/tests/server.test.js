@@ -29,8 +29,9 @@ describe('EditorServer handleMessage', () => {
     server.wss.clients.add(ws1);
     server.wss.clients.add(ws2);
 
-    // ws1 updates document
-    server.handleMessage(ws1, JSON.stringify({ type: 'update', content: 'Hello from Alice' }));
+    // ws1 updates document using current server version
+    const currentVersion = server.documentStore.getVersion('main');
+    server.handleMessage(ws1, JSON.stringify({ type: 'update', content: 'Hello from Alice', version: currentVersion }));
 
     // ws2 should have received an update message when server.broadcastToOthers is used
     const sends = ws2.getSends();

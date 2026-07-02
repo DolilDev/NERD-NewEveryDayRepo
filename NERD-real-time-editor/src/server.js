@@ -58,9 +58,20 @@ class EditorServer {
     }
 
     if (payload.type === 'update') {
-      this.documentStore.setDocument('main', payload.content);
-      this.broadcastToOthers(ws, JSON.stringify({ type: 'update', content: payload.content, username: client.username }));
-      this.broadcastPresence();
+      try {
+        // Use optimistic version check
+        const newVersion = this.documentStore.setDocumentIfVersion('main', payload.content, payload.version);
+        const messageOut = JSON.stringify({ type: 'update', content: payload.content, username: client.username, version: newVersion });
+        this.broadcastToOthers(ws, messageOut);
+        // also acknowledge back to sender the new version
+        ws.send(JSON.stringify({ type: 'ack', version: newVersion }));
+        this.broadcastPresence();
+      } catch (err) {
+        // version mismatch: send current document state to requester for resync
+        const current = this.documentStore.getDocument('main');
+        const version = this.documentStore.getVersion('main');
+        ws.send(JSON.stringify({ type: 'sync', content: current, version }));
+      }
       return;
     }
 
@@ -85,12 +96,14 @@ class EditorServer {
 
   broadcastDocumentState(ws) {
     const content = this.documentStore.getDocument('main');
-    ws.send(JSON.stringify({ type: 'document', content, users: this.getPresence() }));
+    const version = this.documentStore.getVersion('main');
+    ws.send(JSON.stringify({ type: 'document', content, version, users: this.getPresence() }));
   }
 
   broadcastPresence() {
     const presence = this.getPresence();
-    this.wss.clients.forEach((client) => {
+    // broadcast to tracked clients map for reliability in tests and custom sockets
+    Array.from(this.clients.keys()).forEach((client) => {
       if (client.readyState === 1) {
         client.send(JSON.stringify({ type: 'presence', users: presence }));
       }
@@ -102,7 +115,7 @@ class EditorServer {
   }
 
   broadcastToOthers(ws, message) {
-    this.wss.clients.forEach((client) => {
+    Array.from(this.clients.keys()).forEach((client) => {
       if (client !== ws && client.readyState === 1) {
         client.send(message);
       }

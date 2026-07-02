@@ -2,6 +2,7 @@ class DocumentStore {
   constructor() {
     this.documents = new Map();
     this.histories = new Map();
+    this.versions = new Map();
     this.defaultDocument = 'Welcome to NERD collaborative editing.';
     this.initDocument();
   }
@@ -18,6 +19,22 @@ class DocumentStore {
     this.documents.set(id, content);
     const history = this.histories.get(id) || [];
     this.histories.set(id, [...history, content]);
+    const v = (this.versions.get(id) || 0) + 1;
+    this.versions.set(id, v);
+    return v;
+  }
+
+  getVersion(id = 'main') {
+    return this.versions.get(id) || 0;
+  }
+
+  // Attempt to set document only if expectedVersion matches current.
+  setDocumentIfVersion(id = 'main', content, expectedVersion) {
+    const current = this.getVersion(id);
+    if (typeof expectedVersion === 'number' && expectedVersion !== current) {
+      throw new Error('version-mismatch');
+    }
+    return this.setDocument(id, content);
   }
 
   getHistory(id = 'main') {
