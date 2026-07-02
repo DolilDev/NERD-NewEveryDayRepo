@@ -1,0 +1,31 @@
+{
+  "name": "nerd-event-scheduler-api",
+  "version": "1.0.0",
+  "description": "RESTful Event Scheduler API with a pluggable notification system (console + email via Ethereal).",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "jest",
+    "coverage": "jest --coverage"
+  },
+  "keywords": [
+    "express",
+    "rest",
+    "api",
+    "events",
+    "scheduler",
+    "notifications",
+    "nodemailer"
+  ],
+  "author": "DolilDev",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.2.1",
+    "nodemailer": "^9.0.1"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "supertest": "^7.2.2"
+  }
+}

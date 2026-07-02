@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Node / frontend build
+node_modules/
+frontend/public/dist/
+
+# Application data (JSON store)
+data/
+*.tmp
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/

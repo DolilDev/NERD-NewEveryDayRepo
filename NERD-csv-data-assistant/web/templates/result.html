@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2 style="margin-top:0">Result</h2>
+  <p class="muted">{{ summary }} &middot; {{ row_count }} row(s)</p>
+  <div class="table-scroll">{{ table | safe }}</div>
+  <a class="btn" href="{{ url_for('download', token=token, fmt='csv') }}">Download CSV</a>
+  <a class="btn" href="{{ url_for('download', token=token, fmt='json') }}">Download JSON</a>
+  <a class="btn secondary" href="{{ url_for('index') }}">New operation</a>
+</div>
+{% endblock %}

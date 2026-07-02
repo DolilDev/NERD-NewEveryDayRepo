@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'"
+    />
+    <title>NERD Offline Task Manager</title>
+    <style>
+      :root {
+        --bg: #f3f4f6;
+        --card: #ffffff;
+        --ink: #1f2933;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --primary: #2563eb;
+        --danger: #dc2626;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          sans-serif;
+        margin: 0;
+        padding: 2rem 1.5rem 3rem;
+        background: var(--bg);
+        color: var(--ink);
+      }
+      main {
+        max-width: 640px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin: 0;
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .toolbar {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .cloud-status {
+        margin: -0.5rem 0 1rem;
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+      }
+      form {
+        display: grid;
+        gap: 0.75rem;
+      }
+      label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--muted);
+      }
+      input,
+      textarea,
+      select {
+        width: 100%;
+        font: inherit;
+        padding: 0.55rem 0.65rem;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--ink);
+      }
+      textarea {
+        resize: vertical;
+        min-height: 64px;
+      }
+      .form-actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+      .btn {
+        font: inherit;
+        font-weight: 600;
+        padding: 0.55rem 0.9rem;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .btn--primary {
+        background: var(--primary);
+        color: #fff;
+      }
+      .btn--ghost {
+        background: transparent;
+        border-color: var(--line);
+        color: var(--ink);
+      }
+      .btn--danger {
+        background: transparent;
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+      .message {
+        margin: 0 0 1rem;
+        padding: 0.6rem 0.8rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+      }
+      .message--error {
+        background: #fef2f2;
+        color: var(--danger);
+        border: 1px solid #fecaca;
+      }
+      .message--success {
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #a7f3d0;
+      }
+      .task-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 0.6rem;
+      }
+      .task {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+      }
+      .task__row {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+      }
+      .task__title {
+        font-weight: 600;
+      }
+      .task__title--done {
+        text-decoration: line-through;
+        color: var(--muted);
+      }
+      .task__description {
+        margin: 0.35rem 0 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+        white-space: pre-wrap;
+      }
+      .task__actions {
+        display: flex;
+        gap: 0.4rem;
+        flex-shrink: 0;
+      }
+      .badge {
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.15rem 0.5rem;
+        border-radius: 999px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .badge--todo {
+        background: #eef2ff;
+        color: #4338ca;
+      }
+      .badge--in_progress {
+        background: #fffbeb;
+        color: #b45309;
+      }
+      .badge--done {
+        background: #ecfdf5;
+        color: #047857;
+      }
+      .empty-state {
+        color: var(--muted);
+        text-align: center;
+        padding: 1.5rem 0;
+      }
+      .list-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+      }
+      .task-count {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      .list-controls {
+        display: flex;
+        gap: 0.5rem;
+      }
+      .list-controls select {
+        width: auto;
+        padding: 0.35rem 0.5rem;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="header">
+        <h1>NERD Offline Task Manager</h1>
+        <div class="toolbar">
+          <button id="export-button" type="button" class="btn btn--ghost">Export JSON</button>
+          <button id="import-button" type="button" class="btn btn--ghost">Import JSON</button>
+          <button id="push-button" type="button" class="btn btn--ghost" disabled>
+            Push to cloud
+          </button>
+          <button id="pull-button" type="button" class="btn btn--ghost" disabled>
+            Pull from cloud
+          </button>
+        </div>
+      </div>
+
+      <p id="cloud-status" class="cloud-status">Cloud sync: checking…</p>
+
+      <div id="message" class="message" hidden></div>
+
+      <section class="card">
+        <form id="task-form">
+          <div>
+            <label for="title">Title</label>
+            <input
+              id="title"
+              type="text"
+              maxlength="200"
+              placeholder="What needs doing?"
+              autocomplete="off"
+            />
+          </div>
+          <div>
+            <label for="description">Description</label>
+            <textarea id="description" maxlength="2000" placeholder="Optional details"></textarea>
+          </div>
+          <div>
+            <label for="status">Status</label>
+            <select id="status">
+              <option value="todo">To do</option>
+              <option value="in_progress">In progress</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button id="submit-button" type="submit" class="btn btn--primary">Add task</button>
+            <button id="cancel-button" type="button" class="btn btn--ghost" hidden>Cancel</button>
+          </div>
+        </form>
+      </section>
+
+      <div class="list-header">
+        <span id="task-count" class="task-count">No tasks</span>
+        <div class="list-controls">
+          <select id="filter" aria-label="Filter by status">
+            <option value="all">All statuses</option>
+            <option value="todo">To do</option>
+            <option value="in_progress">In progress</option>
+            <option value="done">Done</option>
+          </select>
+          <select id="sort" aria-label="Sort tasks">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="title">Title A–Z</option>
+          </select>
+        </div>
+      </div>
+
+      <p id="empty-state" class="empty-state" hidden>No tasks yet. Add your first one above.</p>
+      <ul id="task-list" class="task-list"></ul>
+    </main>
+
+    <script type="module" src="./renderer.js"></script>
+  </body>
+</html>
