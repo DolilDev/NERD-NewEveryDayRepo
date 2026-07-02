@@ -1,0 +1,18 @@
+{
+  "name": "nerd-real-time-editor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Real-time collaborative text editor with WebSocket synchronization",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "ws": "^8.1.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

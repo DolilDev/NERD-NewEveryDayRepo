@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NERD Real-Time Editor</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 2rem;
+        background: #111827;
+        color: #f9fafb;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      .panel {
+        background: #1f2937;
+        padding: 1rem;
+        border-radius: 10px;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 300px;
+        border-radius: 8px;
+        border: 1px solid #4b5563;
+        padding: 1rem;
+        font-size: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>NERD Real-Time Editor</h1>
+      <p>Collaborative editing will appear here.</p>
+      <div class="panel">
+        <textarea id="editor" placeholder="Start typing..."></textarea>
+      </div>
+    </div>
+
+    <script>
+      const socket = new WebSocket(`ws://${location.host}`);
+      const editor = document.getElementById('editor');
+
+      socket.addEventListener('message', (event) => {
+        editor.value = event.data;
+      });
+
+      editor.addEventListener('input', () => {
+        socket.send(editor.value);
+      });
+    </script>
+  </body>
+</html>
