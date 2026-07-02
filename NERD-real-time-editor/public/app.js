@@ -8,6 +8,7 @@ let socket = null;
 let currentUser = '';
 let reconnectAttempts = 0;
 let reconnectTimer = null;
+let lastKnownVersion = 0;
 
 function setStatus(message) {
   status.textContent = message;
@@ -48,6 +49,7 @@ function connect() {
 
     if (payload.type === 'auth-success') {
       setStatus(`Signed in as ${payload.username}`);
+        // after auth, request document state implicitly handled by server
       return;
     }
 
@@ -63,6 +65,7 @@ function connect() {
 
     if (payload.type === 'document') {
       editor.value = payload.content;
+      lastKnownVersion = payload.version || 0;
       renderPresence(payload.users);
       return;
     }
@@ -75,7 +78,19 @@ function connect() {
     if (payload.type === 'update') {
       if (payload.username !== currentUser) {
         editor.value = payload.content;
+        lastKnownVersion = payload.version || lastKnownVersion;
       }
+    }
+
+    if (payload.type === 'sync') {
+      // server indicates we are out of sync
+      editor.value = payload.content;
+      lastKnownVersion = payload.version || 0;
+      setStatus('Synchronized with server');
+    }
+
+    if (payload.type === 'ack') {
+      lastKnownVersion = payload.version || lastKnownVersion;
     }
   });
 
@@ -88,7 +103,7 @@ function connect() {
 connectButton.addEventListener('click', connect);
 editor.addEventListener('input', () => {
   if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: 'update', content: editor.value }));
+    socket.send(JSON.stringify({ type: 'update', content: editor.value, version: lastKnownVersion }));
   }
 });
 
