@@ -6,6 +6,8 @@ const historyList = document.getElementById('history');
 const status = document.getElementById('status');
 let socket = null;
 let currentUser = '';
+let reconnectAttempts = 0;
+let reconnectTimer = null;
 
 function setStatus(message) {
   status.textContent = message;
@@ -16,7 +18,15 @@ function renderPresence(users) {
 }
 
 function renderHistory(history) {
-  historyList.innerHTML = history.map((entry, index) => `<li>Version ${index + 1}: ${entry.slice(0, 40)}${entry.length > 40 ? '…' : ''}</li>`).join('');
+  historyList.innerHTML = history.map((entry, index) => `<li data-index="${index}"><button class="revert" data-index="${index}">Revert to v${index + 1}</button> Version ${index + 1}: ${entry.slice(0, 40)}${entry.length > 40 ? '…' : ''}</li>`).join('');
+  Array.from(historyList.querySelectorAll('.revert')).forEach((btn) => {
+    btn.addEventListener('click', (ev) => {
+      const idx = ev.target.getAttribute('data-index');
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'revert', index: idx }));
+      }
+    });
+  });
 }
 
 function connect() {
@@ -71,6 +81,7 @@ function connect() {
 
   socket.addEventListener('close', () => {
     setStatus('Disconnected');
+    scheduleReconnect();
   });
 }
 
@@ -86,3 +97,29 @@ document.getElementById('history-btn').addEventListener('click', () => {
     socket.send(JSON.stringify({ type: 'history' }));
   }
 });
+
+function scheduleReconnect() {
+  if (!currentUser) return;
+  reconnectAttempts += 1;
+  const delay = Math.min(30000, 1000 * Math.pow(2, reconnectAttempts));
+  setStatus(`Reconnecting in ${Math.round(delay/1000)}s...`);
+  clearTimeout(reconnectTimer);
+  reconnectTimer = setTimeout(() => {
+    connect();
+  }, delay);
+}
+
+// Formatting helpers
+function wrapSelection(wrapper) {
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  const selected = editor.value.slice(start, end);
+  const before = editor.value.slice(0, start);
+  const after = editor.value.slice(end);
+  const newText = before + wrapper + selected + wrapper + after;
+  editor.value = newText;
+  editor.focus();
+}
+
+document.getElementById('bold-btn').addEventListener('click', () => wrapSelection('**'));
+document.getElementById('italic-btn').addEventListener('click', () => wrapSelection('*'));

@@ -8,11 +8,27 @@ class EditorServer {
     this.wss = new WebSocketServer({ server });
     this.documentStore = new DocumentStore();
     this.clients = new Map();
+    this.heartbeatInterval = null;
     this.setup();
   }
 
   setup() {
     this.wss.on('connection', (ws) => {
+      ws.isAlive = true;
+      ws.on('pong', () => {
+        ws.isAlive = true;
+      });
+
+      // start heartbeat interval if not already
+      if (!this.heartbeatInterval) {
+        this.heartbeatInterval = setInterval(() => {
+          this.wss.clients.forEach((client) => {
+            if (client.isAlive === false) return client.terminate();
+            client.isAlive = false;
+            client.ping();
+          });
+        }, 30000);
+      }
       ws.on('message', (message) => this.handleMessage(ws, message));
       ws.on('close', () => this.handleClose(ws));
       ws.on('error', () => this.handleClose(ws));
@@ -50,6 +66,20 @@ class EditorServer {
 
     if (payload.type === 'history') {
       ws.send(JSON.stringify({ type: 'history', history: this.documentStore.getHistory('main') }));
+    }
+
+    if (payload.type === 'revert') {
+      try {
+        const newContent = this.documentStore.revertToVersion('main', Number(payload.index));
+        // broadcast updated document to everyone
+        this.wss.clients.forEach((client) => {
+          if (client.readyState === 1) {
+            client.send(JSON.stringify({ type: 'document', content: newContent, users: this.getPresence() }));
+          }
+        });
+      } catch (err) {
+        ws.send(JSON.stringify({ type: 'error', message: err.message }));
+      }
     }
   }
 
