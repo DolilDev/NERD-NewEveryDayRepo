@@ -6,13 +6,16 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "test": "jest --runInBand",
+    "build:css": "sass src/styles.scss public/styles.css"
   },
   "dependencies": {
     "express": "^4.21.2",
     "ws": "^8.1.2"
   },
   "devDependencies": {
-    "jest": "^29.7.0"
+    "jest": "^29.7.0",
+    "sass": "^1.77.5"
   }
 }

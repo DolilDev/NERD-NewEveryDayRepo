@@ -1,31 +1,19 @@
 const express = require('express');
 const http = require('http');
-const { WebSocketServer } = require('ws');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+const EditorServer = require('./src/server');
 
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-wss.on('connection', (ws) => {
-  ws.on('message', (message) => {
-    const text = message.toString();
-    wss.clients.forEach((client) => {
-      if (client.readyState === 1) {
-        client.send(text);
-      }
-    });
-  });
 
-  ws.on('close', () => {
-    console.log('Client disconnected');
-  });
-});
+new EditorServer(server);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

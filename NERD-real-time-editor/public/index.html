@@ -49,11 +49,31 @@
 
       socket.addEventListener('message', (event) => {
         editor.value = event.data;
-      });
+              <div class="panel">
+                <div class="controls">
+                  <input id="username" placeholder="Enter your name" />
+                  <button id="connect">Join</button>
+                  <button id="history-btn">Show History</button>
+                  <span id="status">Not connected</span>
+                </div>
+              </div>
 
-      editor.addEventListener('input', () => {
+              <div class="panel">
+                <textarea id="editor" placeholder="Start typing..."></textarea>
+              </div>
+
+              <div class="sidebar">
+                <div class="panel">
+                  <h3>Active users</h3>
+                  <ul id="presence"></ul>
+                </div>
+                <div class="panel">
+                  <h3>Version history</h3>
+                  <ul id="history"></ul>
+                </div>
+              </div>
         socket.send(editor.value);
-      });
-    </script>
-  </body>
-</html>
+
+            <script src="/app.js"></script>
+          </body>
+        </html>
