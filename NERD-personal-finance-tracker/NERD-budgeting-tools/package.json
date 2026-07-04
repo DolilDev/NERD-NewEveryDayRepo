@@ -1,0 +1,25 @@
+{
+  "name": "nerd-budgeting-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal Finance Tracker with budgeting — Flask + JSON backend, TypeScript + Chart.js frontend.",
+  "license": "MIT",
+  "author": "DolilDev",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "build": "esbuild frontend/src/main.ts --bundle --format=esm --target=es2020 --outfile=frontend/public/dist/bundle.js",
+    "watch": "npm run build -- --watch",
+    "test": "jest",
+    "test:coverage": "jest --coverage"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "esbuild": "^0.21.5",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.5",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.3"
+  }
+}

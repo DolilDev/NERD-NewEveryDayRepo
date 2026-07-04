@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual environment
+venv/
+.venv/
+
+# Database (Flask-SQLAlchemy stores the SQLite file under instance/)
+*.db
+finance.db
+instance/
+
+# Test / tooling caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS / editor
+.DS_Store
+*.swp

@@ -1,0 +1,20 @@
+{
+  "name": "nerd-personal-finance-tracker",
+  "version": "1.0.0",
+  "description": "A full-stack personal finance tracker with Node.js backend and Svelte frontend",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "test": "cd backend && npm test",
+    "build": "cd frontend && npm run build",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.1"
+  },
+  "keywords": ["finance", "tracker", "budgeting", "svelte", "express"],
+  "author": "",
+  "license": "MIT"
+}

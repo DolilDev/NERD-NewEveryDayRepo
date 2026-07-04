@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Personal Finance Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Chart.js from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <h1>💰 Personal Finance Tracker</h1>
+    <div id="user-bar" class="user-bar hidden">
+      <span>Signed in as <strong id="current-username"></strong></span>
+      <button id="logout-btn" class="btn btn-secondary">Log out</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ AUTH ============ -->
+    <section id="auth-section" class="card auth-card">
+      <div class="tabs">
+        <button id="tab-login" class="tab active">Log in</button>
+        <button id="tab-register" class="tab">Register</button>
+      </div>
+
+      <form id="login-form" class="auth-form">
+        <label>Username
+          <input type="text" id="login-username" autocomplete="username" required />
+        </label>
+        <label>Password
+          <input type="password" id="login-password" autocomplete="current-password" required />
+        </label>
+        <button type="submit" class="btn btn-primary">Log in</button>
+      </form>
+
+      <form id="register-form" class="auth-form hidden">
+        <label>Username
+          <input type="text" id="register-username" autocomplete="username" required />
+        </label>
+        <label>Password
+          <input type="password" id="register-password" autocomplete="new-password" required />
+        </label>
+        <button type="submit" class="btn btn-primary">Create account</button>
+      </form>
+
+      <p id="auth-message" class="message hidden"></p>
+    </section>
+
+    <!-- ============ APP ============ -->
+    <section id="app-section" class="hidden">
+      <p id="app-message" class="message hidden"></p>
+
+      <!-- Summary -->
+      <div class="summary-grid">
+        <div class="card summary-card income">
+          <span class="summary-label">Total income</span>
+          <span id="summary-income" class="summary-value">0.00</span>
+        </div>
+        <div class="card summary-card expense">
+          <span class="summary-label">Total expenses</span>
+          <span id="summary-expenses" class="summary-value">0.00</span>
+        </div>
+        <div class="card summary-card balance">
+          <span class="summary-label">Balance</span>
+          <span id="summary-balance" class="summary-value">0.00</span>
+        </div>
+      </div>
+
+      <div class="columns">
+        <!-- Left: form + filters -->
+        <div class="column">
+          <div class="card">
+            <h2 id="form-title">Add transaction</h2>
+            <form id="transaction-form" novalidate>
+              <input type="hidden" id="tx-id" />
+              <label>Type
+                <select id="tx-type">
+                  <option value="expense">Expense</option>
+                  <option value="income">Income</option>
+                </select>
+              </label>
+              <label>Amount
+                <input type="number" id="tx-amount" step="0.01" min="0" placeholder="0.00" />
+              </label>
+              <label>Category
+                <input type="text" id="tx-category" placeholder="e.g. groceries" />
+              </label>
+              <label>Date
+                <input type="date" id="tx-date" />
+              </label>
+              <label>Description <span class="optional">(optional)</span>
+                <input type="text" id="tx-description" placeholder="Notes…" />
+              </label>
+              <p id="form-error" class="form-error hidden"></p>
+              <div class="form-actions">
+                <button type="submit" id="tx-submit" class="btn btn-primary">Add</button>
+                <button type="button" id="tx-cancel" class="btn btn-secondary hidden">Cancel</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <h2>Filters</h2>
+            <div class="filters">
+              <label>From
+                <input type="date" id="filter-start" />
+              </label>
+              <label>To
+                <input type="date" id="filter-end" />
+              </label>
+              <label>Category
+                <input type="text" id="filter-category" placeholder="any" />
+              </label>
+              <div class="form-actions">
+                <button id="apply-filters" class="btn btn-primary">Apply</button>
+                <button id="clear-filters" class="btn btn-secondary">Clear</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: transactions list -->
+        <div class="column">
+          <div class="card">
+            <h2>Transactions</h2>
+            <table class="tx-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Category</th>
+                  <th class="num">Amount</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="transactions-body">
+                <!-- rows injected by app.js -->
+              </tbody>
+            </table>
+            <p id="empty-state" class="empty-state hidden">No transactions yet.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-grid">
+        <div class="card chart-card">
+          <h2>Balance over time</h2>
+          <div class="chart-box"><canvas id="balance-chart"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <h2>Expenses by category</h2>
+          <div class="chart-box"><canvas id="category-chart"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <h2>Monthly income vs expenses</h2>
+          <div class="chart-box"><canvas id="monthly-chart"></canvas></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

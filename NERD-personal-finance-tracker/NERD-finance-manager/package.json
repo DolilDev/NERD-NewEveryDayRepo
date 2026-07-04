@@ -1,0 +1,39 @@
+{
+  "name": "nerd-finance-manager",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal finance tracker — Express + TypeScript backend, vanilla TypeScript frontend, in-memory storage.",
+  "license": "MIT",
+  "author": "DolilDev",
+  "scripts": {
+    "typecheck": "tsc -p shared/tsconfig.json && tsc -p backend/tsconfig.json && tsc -p frontend/tsconfig.json",
+    "build": "npm run typecheck && npm run build:backend && npm run build:frontend",
+    "build:backend": "esbuild backend/src/server.ts --bundle --platform=node --format=cjs --target=node20 --packages=external --outfile=backend/dist/server.js",
+    "build:frontend": "esbuild frontend/src/main.ts --bundle --format=esm --target=es2020 --outfile=frontend/public/dist/bundle.js",
+    "start": "node backend/dist/server.js",
+    "dev": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --watch backend/src/server.ts",
+    "dev:backend": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --watch backend/src/server.ts",
+    "dev:frontend": "esbuild frontend/src/main.ts --bundle --format=esm --outfile=frontend/public/dist/bundle.js --servedir=frontend/public --serve=8000 --watch=forever",
+    "test": "jest",
+    "test:backend": "jest backend",
+    "test:frontend": "jest frontend",
+    "test:coverage": "jest --coverage"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.9.3",
+    "@types/supertest": "^7.2.0",
+    "esbuild": "^0.28.1",
+    "jest": "^30.4.2",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.11",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  }
+}

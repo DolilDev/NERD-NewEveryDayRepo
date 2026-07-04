@@ -1,0 +1,45 @@
+{
+  "name": "nerd-offline-task-manager",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Offline-first desktop task manager built with Electron, TypeScript and SQLite, with JSON import/export and optional Firebase Firestore cloud sync.",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.renderer.json && node scripts/copy-assets.js",
+    "rebuild:electron": "electron-rebuild -f -w better-sqlite3",
+    "start": "npm run build && npm run rebuild:electron && electron .",
+    "pretest": "npm rebuild better-sqlite3",
+    "test": "jest",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "test:e2e": "npm run build && npm run rebuild:electron && playwright test"
+  },
+  "author": "DolilDev",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^12.10.1",
+    "dotenv": "^17.4.2",
+    "firebase": "^12.14.0"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.4",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.61.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.9.3",
+    "electron": "^42.4.0",
+    "electron-builder": "^26.15.3",
+    "eslint": "^10.5.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.6.0",
+    "jest": "^30.4.2",
+    "prettier": "^3.8.4",
+    "ts-jest": "^29.4.11",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.61.0"
+  }
+}
