@@ -6,6 +6,7 @@ A collection of daily quests from the NERD app — one quest per day, each in it
 
 | Status | Quest | Description | Stack | Folder |
 | :----: | ----- | ----------- | ----- | ------ |
+| ⏳ | Real-Time Collaborative Text Editor | Create a real-time collaborative text editor using TypeScript for the front end and a minimal Node. | — | [NERD-real-time-editing](./NERD-real-time-editing) |
 | ✅ | Real-Time Collaborative Text Editor | Build a real-time collaborative text editor using Node. js and WebSocket. Structure the project into layers: a server layer handling WebSocket connections, a client layer for the text editor functionality, and a business logic layer that manages document states and changes. | Express, Node.js, JavaScript, HTML, CSS | [NERD-real-time-editor](./NERD-real-time-editor) |
 | ✅ | Real-time Collaborative Text Editor | Build a real-time collaborative text editor using WebSockets for communication between clients. | Vite, Node.js, Python, SCSS, TypeScript | [NERD-collab-text-editor](./NERD-collab-text-editor) |
 | ✅ | Personal Finance Tracker App | Create a Personal Finance Tracker App that allows users to manage their income and expenses. | Node.js | [NERD-personal-finance-tracker](./NERD-personal-finance-tracker) |
