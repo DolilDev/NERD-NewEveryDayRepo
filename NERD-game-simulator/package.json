@@ -1,0 +1,25 @@
+{
+  "name": "nerd-game-simulator",
+  "version": "1.0.0",
+  "description": "Command-line dungeon arena game simulator with an optional TCP multiplayer mode",
+  "main": "dist/cli.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node src/cli.ts",
+    "server": "ts-node src/network/GameServer.ts",
+    "client": "ts-node src/network/GameClient.ts",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch"
+  },
+  "keywords": ["game", "simulator", "cli", "typescript", "multiplayer"],
+  "author": "Tymon Kryszyłowicz (DolilDev)",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.30",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}
