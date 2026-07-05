@@ -6,7 +6,7 @@ A collection of daily quests from the NERD app — one quest per day, each in it
 
 | Status | Quest | Description | Stack | Folder |
 | :----: | ----- | ----------- | ----- | ------ |
-| ⏳ | NERD-game-simulator | Create a command-line-based game simulator in TypeScript or Python that allows for the simulation of various game scenarios. | — | [NERD-game-simulator](./NERD-game-simulator) |
+| ✅ | NERD-game-simulator | Create a command-line-based game simulator in TypeScript or Python that allows for the simulation of various game scenarios. | Node.js, TypeScript, JavaScript | [NERD-game-simulator](./NERD-game-simulator) |
 | ✅ | Real-Time Collaborative Text Editor | Create a real-time collaborative text editor using TypeScript for the front end and a minimal Node. | Vite, Node.js, TypeScript, HTML, CSS | [NERD-real-time-editing](./NERD-real-time-editing) |
 | ✅ | Real-Time Collaborative Text Editor | Build a real-time collaborative text editor using Node. js and WebSocket. Structure the project into layers: a server layer handling WebSocket connections, a client layer for the text editor functionality, and a business logic layer that manages document states and changes. | Express, Node.js, JavaScript, HTML, CSS | [NERD-real-time-editor](./NERD-real-time-editor) |
 | ✅ | Real-time Collaborative Text Editor | Build a real-time collaborative text editor using WebSockets for communication between clients. | Vite, Node.js, Python, SCSS, TypeScript | [NERD-collab-text-editor](./NERD-collab-text-editor) |
